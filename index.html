@@ -1,0 +1,1392 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0c1517" />
+<meta name="description" content="Simulación 3D de la estación solar portátil para emergencias (DSE 2026-2): seguidor de 2 ejes, caja de control con Raspberry Pi Zero 2 W y STM32, y seis situaciones para explorar." />
+<title>Estación Solar 3D</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230f2226'/%3E%3Ccircle cx='32' cy='30' r='11' fill='%23f5b84a'/%3E%3Cpath d='M14 50h36' stroke='%235fd3b5' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E" />
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+  }
+}
+</script>
+<style>
+:root {
+  --bg: #0c1517;
+  --panel: rgba(13, 24, 27, 0.84);
+  --panel-solid: #111f23;
+  --line: rgba(255, 255, 255, 0.10);
+  --line-strong: rgba(255, 255, 255, 0.18);
+  --text: #e7f0ed;
+  --muted: #9bb0aa;
+  --faint: #6f847e;
+  --accent: #f5b84a;
+  --accent-ink: #1c1405;
+  --teal: #5fd3b5;
+  --blue: #6aa8ff;
+  --green: #7ee08a;
+  --red: #ff7a6b;
+  --radius: 14px;
+  --gutter: 16px;
+  --scene-h: 100svh;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--text);
+  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+button, select, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+#scene { position: fixed; inset: 0 0 auto 0; width: 100%; height: var(--scene-h); display: block; touch-action: none; outline: none; }
+
+.topbar { position: fixed; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 12px;
+  padding: 12px var(--gutter); pointer-events: none; z-index: 5; }
+.brand { display: flex; align-items: center; gap: 10px; pointer-events: auto; min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 5px 12px 5px 5px; backdrop-filter: blur(10px); }
+.brand-mark { width: 36px; height: 36px; border-radius: 10px; background: #0f2226; border: 1px solid var(--line-strong);
+  display: grid; place-items: center; flex: none; }
+.brand h1 { margin: 0; font-size: 15px; font-weight: 650; letter-spacing: .01em; white-space: nowrap; }
+.brand p { margin: 0; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.brand-text { min-width: 0; }
+.clock { margin: 0 auto; pointer-events: auto; display: flex; align-items: center; gap: 10px; background: var(--panel);
+  border: 1px solid var(--line); border-radius: 999px; padding: 6px 8px 6px 14px; backdrop-filter: blur(10px); }
+.clock .time { font-variant-numeric: tabular-nums; font-size: 18px; font-weight: 650; }
+.clock .meta { font-size: 12px; color: var(--muted); }
+.header-actions { display: flex; gap: 8px; pointer-events: auto; }
+.icon-btn { height: 36px; min-width: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line-strong);
+  background: var(--panel); backdrop-filter: blur(10px); display: inline-flex; align-items: center; gap: 6px; }
+.icon-btn:hover { border-color: var(--accent); }
+.play { width: 32px; height: 32px; border-radius: 50%; border: 0; background: var(--accent); color: var(--accent-ink);
+  display: grid; place-items: center; font-weight: 800; }
+
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); backdrop-filter: blur(12px);
+  padding: 14px; overflow: auto; scrollbar-width: thin; }
+.panel h2 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 650; }
+.panel h3 { margin: 0 0 4px; font-size: 15px; }
+.tabs { display: none; }
+
+/* desktop layout */
+.p-esc { position: fixed; top: 64px; left: var(--gutter); width: 318px; max-height: calc(100svh - 80px); z-index: 4; }
+.p-med { position: fixed; top: 64px; right: var(--gutter); width: 330px; max-height: calc(100svh - 80px); z-index: 4; }
+.p-ctl { position: fixed; bottom: var(--gutter); left: calc(var(--gutter) + 318px + 16px); right: calc(var(--gutter) + 330px + 16px);
+  z-index: 4; display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
+.p-ctl h2 { display: none; }
+
+.missions { display: grid; gap: 6px; }
+.mission { display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: center; text-align: left; width: 100%;
+  border: 1px solid var(--line); background: rgba(255,255,255,.03); border-radius: 11px; padding: 8px 10px; }
+.mission:hover { border-color: var(--line-strong); background: rgba(255,255,255,.06); }
+.mission.active { border-color: var(--accent); background: rgba(245,184,74,.10); }
+.mission-number { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; font-weight: 700;
+  background: rgba(255,255,255,.07); font-variant-numeric: tabular-nums; }
+.mission.active .mission-number { background: var(--accent); color: var(--accent-ink); }
+.mission strong { display: block; font-size: 13.5px; font-weight: 600; }
+.mission div span { display: block; font-size: 12px; color: var(--muted); }
+.esc-card { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 12px; }
+.esc-card p { margin: 6px 0; color: #cfdcd8; }
+.esc-card .eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); font-weight: 700; }
+.progress { height: 6px; background: rgba(255,255,255,.08); border-radius: 99px; overflow: hidden; margin: 10px 0 4px; }
+.progress > i { display: block; height: 100%; width: 0; background: var(--accent); }
+.summary { margin-top: 8px; padding: 10px; border-radius: 10px; background: rgba(95,211,181,.10); border: 1px solid rgba(95,211,181,.35); }
+.summary[hidden] { display: none; }
+.log { list-style: none; margin: 8px 0 0; padding: 0; font-size: 12px; color: var(--muted); }
+.log li { padding: 3px 0; border-top: 1px dashed var(--line); }
+.log b { color: var(--text); font-variant-numeric: tabular-nums; font-weight: 600; margin-right: 6px; }
+
+.metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.metric { background: rgba(255,255,255,.035); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; min-width: 0; }
+.metric-label { font-size: 11px; color: var(--muted); display: block; }
+.metric-value { font-size: 17px; font-weight: 650; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.metric-value small { font-size: 12px; color: var(--muted); font-weight: 500; }
+.metric.wide { grid-column: span 2; }
+.meter { height: 7px; border-radius: 99px; background: rgba(255,255,255,.08); overflow: hidden; margin-top: 6px; }
+.meter > i { display: block; height: 100%; width: 50%; background: var(--green); transition: width .3s; }
+.pills { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.pill { font-size: 11.5px; padding: 3px 8px; border-radius: 99px; border: 1px solid var(--line-strong); color: var(--muted); white-space: nowrap; }
+.pill.on { color: #0d1a12; background: var(--green); border-color: transparent; }
+.pill.warn { color: #250d09; background: var(--red); border-color: transparent; }
+.pill.busy { color: var(--accent-ink); background: var(--accent); border-color: transparent; }
+.chart-wrap { margin-top: 4px; }
+#chart { width: 100%; height: 132px; display: block; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 11.5px; color: var(--muted); margin-top: 4px; }
+.legend i { display: inline-block; width: 12px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
+.note { font-size: 11.5px; color: var(--faint); margin: 10px 0 0; }
+
+.ctl-group { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.ctl-group label, .ctl-label { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 9px; overflow: hidden; }
+.seg button { border: 0; background: transparent; padding: 5px 9px; font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button.active { background: var(--accent); color: var(--accent-ink); font-weight: 650; }
+.toggle { border: 1px solid var(--line-strong); background: transparent; border-radius: 9px; padding: 5px 10px; font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.toggle[aria-pressed="true"] { background: var(--teal); color: #052019; border-color: transparent; font-weight: 650; }
+input[type="range"] { accent-color: var(--accent); width: 120px; }
+.range-val { font-variant-numeric: tabular-nums; font-size: 12.5px; min-width: 40px; }
+select { background: var(--panel-solid); border: 1px solid var(--line-strong); border-radius: 9px; padding: 5px 8px; font-size: 12.5px; }
+
+.info-card { position: fixed; top: 64px; left: 50%; transform: translateX(-50%); width: min(380px, calc(100vw - 2 * var(--gutter)));
+  z-index: 6; background: var(--panel-solid); border: 1px solid var(--accent); border-radius: var(--radius); padding: 14px; box-shadow: 0 12px 40px rgba(0,0,0,.45); }
+.info-card[hidden] { display: none; }
+.info-card h3 { margin: 0 32px 4px 0; font-size: 15px; }
+.info-card p { margin: 0 0 8px; color: #cfdcd8; font-size: 13px; }
+.info-card dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; font-size: 13px; }
+.info-card dt { color: var(--muted); }
+.info-card dd { margin: 0; font-variant-numeric: tabular-nums; text-align: right; }
+.close-x { position: absolute; top: 10px; right: 10px; width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--line-strong); background: transparent; }
+
+.modal-backdrop { position: fixed; inset: 0; background: rgba(3, 8, 10, .6); z-index: 20; display: grid; place-items: center; padding: var(--gutter); }
+.modal-backdrop[hidden] { display: none; }
+.modal { position: relative; background: var(--panel-solid); border: 1px solid var(--line-strong); border-radius: 18px; padding: 22px;
+  width: min(620px, 100%); max-height: calc(100svh - 2 * var(--gutter)); overflow: auto; }
+.modal h2 { margin: 0 0 6px; font-size: 20px; }
+.modal h3 { margin: 16px 0 6px; font-size: 14px; color: var(--accent); }
+.modal p, .modal li { color: #cfdcd8; }
+.modal ul { padding-left: 18px; margin: 6px 0; }
+.modal table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.modal td { border-top: 1px solid var(--line); padding: 4px 6px; vertical-align: top; }
+.modal td:first-child { color: var(--muted); white-space: nowrap; }
+.primary { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 10px; padding: 9px 16px; font-weight: 700; margin-top: 14px; }
+.qr-box { display: grid; place-items: center; background: #fff; border-radius: 12px; padding: 12px; margin: 12px auto; width: max-content; max-width: 100%; }
+.qr-box svg { display: block; width: 220px; height: 220px; }
+.share-url { display: flex; gap: 8px; }
+.share-url input { flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--line-strong); border-radius: 9px; padding: 7px 10px; font-size: 12.5px; }
+kbd { font: 12px ui-monospace, monospace; background: rgba(255,255,255,.08); border: 1px solid var(--line-strong); border-radius: 5px; padding: 0 5px; }
+
+.loading { position: fixed; inset: 0; display: grid; place-items: center; z-index: 30; background: var(--bg); color: var(--muted); text-align: center; padding: var(--gutter); }
+.loading[hidden] { display: none; }
+
+/* tablet & phone: bottom sheet with tabs */
+@media (max-width: 1100px) {
+  :root { --scene-h: 54svh; }
+  .clock .meta { display: none; }
+  .brand p { display: none; }
+  .sheet { position: fixed; left: 0; right: 0; bottom: 0; height: calc(100svh - var(--scene-h)); z-index: 4;
+    background: var(--panel-solid); border-top: 1px solid var(--line-strong); border-radius: 18px 18px 0 0; display: flex; flex-direction: column; }
+  .tabs { display: flex; gap: 6px; padding: 10px var(--gutter) 0; }
+  .tabs button { flex: 1; border: 1px solid var(--line); background: transparent; border-radius: 10px; padding: 7px 4px; font-size: 13px; color: var(--muted); }
+  .tabs button[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); border-color: transparent; font-weight: 700; }
+  .panel { position: static; width: auto; max-height: none; border: 0; border-radius: 0; background: transparent; backdrop-filter: none;
+    padding: 12px var(--gutter) calc(16px + env(safe-area-inset-bottom)); flex: 1; min-height: 0; }
+  .p-esc, .p-med, .p-ctl { position: static; left: auto; right: auto; top: auto; bottom: auto; }
+  .panel:not(.shown) { display: none !important; }
+  .p-ctl { display: flex; flex-direction: column; align-items: stretch; gap: 12px; }
+  .p-ctl .ctl-group { justify-content: space-between; flex-wrap: wrap; }
+  input[type="range"] { flex: 1; width: auto; min-width: 100px; }
+  .info-card { top: 60px; max-height: calc(var(--scene-h) - 72px); overflow: auto; padding: 12px; }
+  .info-card p { font-size: 12.5px; }
+}
+@media (min-width: 1101px) { .sheet { display: contents; } }
+@media (max-width: 520px) {
+  .brand h1 { font-size: 14px; }
+  .header-actions .label { display: none; }
+  .clock { padding-left: 10px; }
+  .clock .time { font-size: 16px; }
+  .topbar { gap: 8px; }
+}
+@media (prefers-reduced-motion: reduce) { .meter > i { transition: none; } }
+</style>
+</head>
+<body>
+<canvas id="scene" aria-label="Escena 3D interactiva de la estación solar" tabindex="0"></canvas>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="11" r="5" fill="#f5b84a"/><path d="M3 20h18" stroke="#5fd3b5" stroke-width="2.4" stroke-linecap="round"/></svg>
+    </div>
+    <div class="brand-text">
+      <h1>Estación Solar 3D</h1>
+      <p>DSE 2026-2 · seguidor de 2 ejes + caja de control</p>
+    </div>
+  </div>
+  <div class="clock" aria-live="off">
+    <div>
+      <div class="time" id="clock-time">08:00</div>
+    </div>
+    <div class="meta" id="clock-meta">hora solar · 22 oct · Bogotá</div>
+    <button class="play" id="play" aria-label="Pausar simulación" title="Pausar / continuar (espacio)">❚❚</button>
+  </div>
+  <div class="header-actions">
+    <button class="icon-btn" id="help-btn" aria-label="Cómo usar la simulación">?<span class="label">Ayuda</span></button>
+    <button class="icon-btn" id="share-btn" aria-label="Compartir">⇪<span class="label">Compartir</span></button>
+  </div>
+</header>
+
+<aside class="sheet">
+  <nav class="tabs" role="tablist" aria-label="Paneles">
+    <button role="tab" data-tab="p-esc" aria-selected="true">Situaciones</button>
+    <button role="tab" data-tab="p-med" aria-selected="false">Medidas</button>
+    <button role="tab" data-tab="p-ctl" aria-selected="false">Controles</button>
+  </nav>
+
+  <section class="panel p-esc shown" id="p-esc" aria-label="Situaciones">
+    <h2>Situaciones</h2>
+    <div class="missions" id="missions"></div>
+    <div class="esc-card" id="esc-card">
+      <div class="eyebrow" id="esc-eyebrow">Modo libre</div>
+      <h3 id="esc-title">Explora la estación</h3>
+      <p id="esc-obs">Elige una situación o mueve los controles. Haz clic sobre cualquier pieza para ver qué hace y su valor en vivo.</p>
+      <div class="progress" aria-hidden="true"><i id="esc-progress"></i></div>
+      <div class="summary" id="esc-summary" hidden></div>
+      <ul class="log" id="log"></ul>
+    </div>
+  </section>
+
+  <section class="panel p-med" id="p-med" aria-label="Medidas en vivo">
+    <h2>Medidas en vivo</h2>
+    <div class="metrics">
+      <div class="metric wide">
+        <span class="metric-label">Batería AGM 12 V 7 Ah</span>
+        <span class="metric-value" id="m-soc">60 %</span> <span class="metric-value"><small id="m-v">12,2 V</small></span>
+        <div class="meter"><i id="m-soc-bar"></i></div>
+      </div>
+      <div class="metric"><span class="metric-label">Panel (seguidor)</span><span class="metric-value" id="m-pv">0 W</span></div>
+      <div class="metric"><span class="metric-label">Panel fijo (ref.)</span><span class="metric-value" id="m-pf">0 W</span></div>
+      <div class="metric"><span class="metric-label">Consumo</span><span class="metric-value" id="m-load">0 W</span></div>
+      <div class="metric"><span class="metric-label">Corriente batería</span><span class="metric-value" id="m-ib">0 A</span></div>
+      <div class="metric"><span class="metric-label">Servos az / incl.</span><span class="metric-value" id="m-ang">0° / 0°</span></div>
+      <div class="metric"><span class="metric-label">Sol az / elev.</span><span class="metric-value" id="m-sun">0° / 0°</span></div>
+      <div class="metric"><span class="metric-label">Error LDR · banda</span><span class="metric-value" id="m-err">0,00</span></div>
+      <div class="metric"><span class="metric-label">Correcciones</span><span class="metric-value" id="m-corr">0</span></div>
+      <div class="metric wide"><span class="metric-label">Energía en esta situación</span><span class="metric-value" id="m-energy">0 Wh</span></div>
+    </div>
+    <div class="pills" id="pills"></div>
+    <div class="chart-wrap">
+      <canvas id="chart" aria-label="Gráfico de potencia y estado de carga en el tiempo"></canvas>
+      <div class="legend">
+        <span><i style="background:#f5b84a"></i>Seguidor</span>
+        <span><i style="background:#8d9a96"></i>Fijo</span>
+        <span><i style="background:#6aa8ff"></i>Consumo</span>
+        <span><i style="background:#7ee08a"></i>SoC</span>
+      </div>
+    </div>
+    <p class="note">Modelo simplificado con valores supuestos (panel de 20 W, controlador PWM, AGM de 7 Ah). Sirve para comparar casos, no para dimensionar. Los detalles están en Ayuda.</p>
+  </section>
+
+  <section class="panel p-ctl" id="p-ctl" aria-label="Controles">
+    <h2>Controles</h2>
+    <div class="ctl-group">
+      <span class="ctl-label">Velocidad</span>
+      <div class="seg" id="speed-seg">
+        <button data-speed="1">1×</button><button data-speed="60">1 min/s</button><button data-speed="300">5 min/s</button><button data-speed="1200">20 min/s</button><button data-speed="3600">1 h/s</button>
+      </div>
+    </div>
+    <div class="ctl-group">
+      <label for="hour">Hora</label>
+      <input type="range" id="hour" min="0" max="23.99" step="0.05" />
+      <span class="range-val" id="hour-val">08:00</span>
+    </div>
+    <div class="ctl-group">
+      <label for="cover">Nubosidad</label>
+      <input type="range" id="cover" min="0" max="1" step="0.05" />
+      <span class="range-val" id="cover-val">0 %</span>
+    </div>
+    <div class="ctl-group">
+      <label for="soc">Batería</label>
+      <input type="range" id="soc" min="0.05" max="1" step="0.01" />
+      <span class="range-val" id="soc-val">60 %</span>
+    </div>
+    <div class="ctl-group">
+      <button class="toggle" id="t-lamp" aria-pressed="false">Lámpara</button>
+      <button class="toggle" id="t-usb" aria-pressed="true">USB</button>
+      <label for="phones">Celulares</label>
+      <select id="phones"><option value="0">0</option><option value="1">1</option><option value="2">2</option></select>
+      <button class="toggle" id="t-track" aria-pressed="true">Seguimiento</button>
+    </div>
+    <div class="ctl-group">
+      <span class="ctl-label">Tapa</span>
+      <div class="seg" id="lid-seg"><button data-lid="cerrada">Cerrada</button><button data-lid="transparente">Transparente</button><button data-lid="abierta">Sin tapa</button></div>
+      <button class="toggle" id="t-ref" aria-pressed="true">Panel fijo</button>
+    </div>
+    <div class="ctl-group">
+      <span class="ctl-label">Vista</span>
+      <div class="seg" id="cam-seg"><button data-cam="general">General</button><button data-cam="seguidor">Seguidor</button><button data-cam="caja">Caja</button></div>
+    </div>
+  </section>
+</aside>
+
+<div class="info-card" id="info" hidden role="dialog" aria-labelledby="info-title">
+  <button class="close-x" id="info-close" aria-label="Cerrar">✕</button>
+  <h3 id="info-title"></h3>
+  <p id="info-desc"></p>
+  <dl id="info-live"></dl>
+</div>
+
+<div class="modal-backdrop" id="help" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="help-title">
+    <button class="close-x" data-close aria-label="Cerrar">✕</button>
+    <h2 id="help-title">Estación solar portátil para emergencias</h2>
+    <p>Gemelo 3D del proyecto del equipo (DSE 2026-2). Hay un panel de 12 V con seguidor de 2 ejes (4 LDR y 2 servos MG996R) y una caja de control con batería AGM, controlador de carga, STM32 Blue Pill y una <strong>Raspberry Pi Zero 2 W</strong>, que reemplaza a la LicheeRV Nano porque esa tarjeta nunca llegó.</p>
+    <h3>Cómo se usa</h3>
+    <ul>
+      <li><strong>Situaciones</strong> (teclas <kbd>1</kbd>–<kbd>6</kbd>): cada una fija la hora, las nubes, la batería y las cargas, corre sola y termina con un resumen.</li>
+      <li><strong>Cámara:</strong> arrastra para girar, rueda o pellizco para acercar y clic derecho o dos dedos para desplazar.</li>
+      <li><strong>Clic sobre una pieza</strong>: muestra qué hace y su valor en vivo. Clic en los interruptores del frente para encender la lámpara o el USB.</li>
+      <li><strong>Tapa</strong>: hazla transparente o quítala para ver el interior (tecla <kbd>T</kbd>). <kbd>Espacio</kbd> pausa la simulación.</li>
+      <li><strong>Compartir</strong> genera un enlace y un QR que abren la situación actual.</li>
+    </ul>
+    <h3>Supuestos del modelo (aproximados)</h3>
+    <table>
+      <tr><td>Sol</td><td>Latitud 4,6° N, 22 de octubre (declinación ≈ −12°), hora solar. Irradiancia de cielo despejado con masa de aire (Meinel). Las nubes atenúan el haz directo hasta un 95 % y aumentan la difusa.</td></tr>
+      <tr><td>Panel</td><td>12 V 20 W, Isc ≈ 1,2 A. Con el controlador PWM entrega I ≈ Isc·G/1000 al voltaje de la batería, no su potencia máxima.</td></tr>
+      <tr><td>Panel fijo</td><td>Referencia virtual: el mismo panel fijo a 10° mirando al sur. Sirve para medir la ganancia del seguimiento.</td></tr>
+      <tr><td>Seguidor</td><td>Error diferencial de las LDR filtrado (τ ≈ 20 s), banda muerta de ≈ 2° para arrancar y rampa de 3°/s por firmware. Azimut de este a oeste por el sur, inclinación ±60°. Sin luz útil queda quieto, y al amanecer vuelve al este.</td></tr>
+      <tr><td>Batería</td><td>AGM 12 V 7 Ah. Voltaje en reposo ≈ 11,5 V + 1,2 V·SoC (12,7 V llena, 11,8 V ≈ 25 %), R interna de 40 mΩ y eficiencia de carga del 90 %. El controlador reduce la corriente sobre el 92 %.</td></tr>
+      <tr><td>Cargas</td><td>Lámpara LED de 5 W. USB QC de 10 W por celular (batería de 15 Wh; la carga se reduce sobre el 80 %), con convertidor al 88 %. Lógica: STM32 0,1 W, LCD 0,15 W, bobinas de relé de 0,36 W, LM2596 al 85 %. Servos: 3 W cada uno mientras se mueven.</td></tr>
+      <tr><td>Raspberry Pi</td><td>0,6 W en reposo y 2,5 W trabajando (2 de cada 10 min). El STM32 la enciende si hay más de 3 W de excedente o SoC &gt; 70 %. La apaga sin excedente y con SoC &lt; 50 %, o cuando hay corte.</td></tr>
+      <tr><td>Corte (LVD)</td><td>El relé 3 abre si V &lt; 11,8 V durante 10 s y cierra cuando el voltaje estimado en reposo (V − I·R) llega a 12,4 V.</td></tr>
+    </table>
+    <button class="primary" data-close>Empezar</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="share" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="share-title" style="width:min(400px,100%)">
+    <button class="close-x" data-close aria-label="Cerrar">✕</button>
+    <h2 id="share-title">Compartir</h2>
+    <p id="share-desc">Escanea el código o copia el enlace.</p>
+    <div class="qr-box" id="qr"></div>
+    <div class="share-url"><input id="share-url" readonly aria-label="Enlace" /><button class="icon-btn" id="copy-btn">Copiar</button></div>
+  </div>
+</div>
+
+<div class="loading" id="loading">Cargando la escena 3D…</div>
+<noscript><div class="loading">Esta simulación necesita JavaScript y WebGL.</div></noscript>
+
+<script>
+  window.addEventListener('error', (e) => {
+    const l = document.getElementById('loading');
+    if (l && !l.hidden) l.textContent = 'No se pudo cargar la escena 3D (' + (e.message || 'error') + '). Revisa la conexión y que el navegador tenga WebGL.';
+  });
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+/* ───────── utilidades ───────── */
+const $ = (s) => document.querySelector(s);
+const mm = (v) => v / 1000;
+const D2R = Math.PI / 180;
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+const fmt = (x, d = 1) => x.toLocaleString('es-CO', { minimumFractionDigits: d, maximumFractionDigits: d });
+const hhmm = (h) => { h = ((h % 24) + 24) % 24; let H = Math.floor(h), M = Math.round((h - H) * 60); if (M === 60) { H = (H + 1) % 24; M = 0; } return String(H).padStart(2, '0') + ':' + String(M).padStart(2, '0'); };
+
+/* ───────── parámetros del modelo (supuestos) ───────── */
+const P = {
+  lat: 4.6, doy: 295,
+  isc: 1.2, cap: 7, rInt: 0.04, etaCh: 0.9,
+  lvdOff: 11.8, lvdOn: 12.4, lvdDelay: 10 / 3600,
+  lamp: 5, phoneW: 10, phoneWh: 15, etaUsb: 0.88, eta5: 0.85, eta6: 0.85,
+  stm: 0.1, lcd: 0.15, coil: 0.36, rpiIdle: 0.6, rpiBusy: 2.5, ctrlSelf: 0.06,
+  servoMove: 3.0, servoHold: 0.05,
+  slew: 3, tau: 20, deadOn: 0.12, deadOff: 0.04, lightMin: 50,
+  fixedTilt: 10,
+};
+const ocv = (soc) => 11.5 + 1.2 * soc;
+
+/* ───────── estado ───────── */
+const S = {
+  t: 8, run: true, speed: 300, soc: 0.6, cover: 0, lamp: false, usb: true, phones: [], track: true,
+  psi: 0, beta: 0, movingAz: false, movingEl: false, mode: 'seguimiento', night: false, nightT: 0,
+  eTf: 0, eHf: 0, eT: 0, eH: 0, corrections: 0, prevCloud: 0,
+  lvd: false, lvdT: 0, lvdEvents: 0, rpi: false, rpiBusy: false,
+  V: 12.2, Ib: 0, Ipv: 0, IpvFix: 0, Iacc: 0, Pavail: 0, PfixAvail: 0, Pgen: 0, Pload: 0, surplus: 0, surplusEx: 0, surplusF: 0,
+  G: 0, Gfix: 0, cloudNow: 0, sun: null, irr: { dni: 0, dhi: 0 },
+  E: { cap: 0, fix: 0, load: 0 }, socStart: 0.6, temp: 24,
+  scen: null, done: false, hist: [], lastSample: -1e9, log: [], lid: 'cerrada', cam: 'general', ref: true,
+};
+
+/* ───────── sol e irradiancia ───────── */
+const tmpV = new THREE.Vector3();
+function sunAt(h) {
+  const dec = 23.44 * Math.sin(2 * Math.PI * (284 + P.doy) / 365) * D2R;
+  const lat = P.lat * D2R, H = (h - 12) * 15 * D2R;
+  const E = -Math.cos(dec) * Math.sin(H);
+  const N = Math.sin(dec) * Math.cos(lat) - Math.cos(dec) * Math.sin(lat) * Math.cos(H);
+  const U = Math.sin(dec) * Math.sin(lat) + Math.cos(dec) * Math.cos(lat) * Math.cos(H);
+  let az = Math.atan2(E, N) / D2R; if (az < 0) az += 360;
+  return { dir: new THREE.Vector3(E, U, -N).normalize(), el: Math.asin(clamp(U, -1, 1)) / D2R, az };
+}
+function irradiance(sun, cloud) {
+  if (sun.el <= 0) return { dni: 0, dhi: 0, dni0: 0 };
+  const s = Math.sin(sun.el * D2R);
+  const am = 1 / (s + 0.50572 * Math.pow(sun.el + 6.07995, -1.6364));
+  const dni0 = 1353 * Math.pow(0.7, Math.pow(am, 0.678));
+  return { dni: dni0 * (1 - 0.95 * cloud), dhi: s * dni0 * (0.1 * (1 - cloud) + 0.3 * cloud), dni0 };
+}
+const poa = (n, sun, irr) => irr.dni * Math.max(0, n.dot(sun.dir)) + irr.dhi * (1 + n.y) / 2;
+function fbm(h) { const m = h * 60; return clamp(0.5 + 0.28 * Math.sin(m * 0.9 + 1.3) + 0.16 * Math.sin(m * 0.37 + 0.4) + 0.1 * Math.sin(m * 2.3 + 2.1) + 0.06 * Math.sin(m * 5.1), 0, 1); }
+function cloudAt(h, C) { if (C <= 0.001) return 0; if (C >= 0.999) return 0.92; return 0.92 * smooth(1 - C - 0.07, 1 - C + 0.07, fbm(h)); }
+
+/* ejes del panel: n normal, f adelante en el plano (hacia donde inclina), h eje de giro */
+const nV = new THREE.Vector3(), fV = new THREE.Vector3(), hV = new THREE.Vector3();
+function panelAxes(psi, beta) {
+  const sp = Math.sin(psi), cp = Math.cos(psi), sb = Math.sin(beta), cb = Math.cos(beta);
+  nV.set(sp * sb, cb, cp * sb); fV.set(sp * cb, -sb, cp * cb); hV.set(cp, 0, -sp);
+}
+const nFix = new THREE.Vector3(0, Math.cos(P.fixedTilt * D2R), Math.sin(P.fixedTilt * D2R));
+const AZ_MIN = -90 * D2R, AZ_MAX = 90 * D2R, EL_MIN = -60 * D2R, EL_MAX = 60 * D2R;
+const compassAz = (psi) => ((180 - psi / D2R) % 360 + 360) % 360;
+function poseFor(sun) {
+  let A = sun.az, b = clamp(90 - sun.el, 0, 60);
+  if (A < 90 || A > 270) { A = (A + 180) % 360; b = -b; }
+  return { psi: (180 - A) * D2R, beta: b * D2R };
+}
+
+function addLog(msg) {
+  S.log.unshift({ t: S.t, msg });
+  if (S.log.length > 6) S.log.pop();
+  renderLog();
+}
+
+/* ───────── seguidor (firmware del STM32) ───────── */
+function trackerStep(dt, sun, irr) {
+  const dts = dt * 3600;
+  const light = irr.dni + irr.dhi;
+  // error geométrico normalizado y cómo lo ve la cruz de LDR
+  const dirFrac = irr.dni / (irr.dni + irr.dhi + 20);
+  const gT = clamp(sun.dir.dot(fV) / 0.3, -1, 1), gH = clamp(sun.dir.dot(hV) / 0.3, -1, 1);
+  const dCloud = (S.cloudNow - S.prevCloud) / Math.max(dt * 60, 1 / 60);
+  const spur = clamp(Math.abs(dCloud) * 0.08, 0, 0.12);
+  const sgn = Math.sin(S.t * 977.3) > 0 ? 1 : -1;
+  S.eT = dirFrac * gT + spur * sgn + (Math.random() - 0.5) * 0.03;
+  S.eH = dirFrac * gH - spur * sgn * 0.7 + (Math.random() - 0.5) * 0.03;
+  const a = 1 - Math.exp(-dts / P.tau);
+  S.eTf += (S.eT - S.eTf) * a; S.eHf += (S.eH - S.eHf) * a;
+
+  if (!S.track) { S.movingAz = S.movingEl = false; S.mode = 'desactivado'; return; }
+
+  if (light < P.lightMin) {
+    S.nightT += dt;
+    if (S.nightT > 0.75 && !S.night) { S.night = true; }
+    S.movingAz = S.movingEl = false; S.mode = 'espera nocturna'; return;
+  }
+  S.nightT = 0;
+  if (S.night) {
+    S.night = false;
+    if (S.psi < 45 * D2R) { S.mode = 'retorno al este'; addLog('Amanece: el seguidor vuelve al este'); }
+  }
+  const step = P.slew * D2R * dts;
+  if (S.mode === 'retorno al este') {
+    const tp = 90 * D2R, tb = 45 * D2R;
+    const dp = tp - S.psi, db = tb - S.beta;
+    S.psi += clamp(dp, -step, step); S.beta += clamp(db, -step, step);
+    S.movingAz = Math.abs(dp) > 1e-3; S.movingEl = Math.abs(db) > 1e-3;
+    if (!S.movingAz && !S.movingEl) { S.mode = 'seguimiento'; S.eTf = S.eT; S.eHf = S.eH; }
+    return;
+  }
+  // inclinación: arranca con el error filtrado, se detiene con el error crudo
+  const wasIdle = !S.movingAz && !S.movingEl;
+  if (!S.movingEl && Math.abs(S.eTf) > P.deadOn) S.movingEl = true;
+  if (S.movingEl) {
+    if (Math.abs(S.eT) < P.deadOff) S.movingEl = false;
+    else {
+      const mv = Math.min(step, 0.8 * Math.abs(S.eT) * 0.3 / Math.max(dirFrac, 0.2));
+      const nb = clamp(S.beta + Math.sign(S.eT) * mv, EL_MIN, EL_MAX);
+      if (nb === S.beta) S.movingEl = false;
+      S.beta = nb;
+    }
+  }
+  // azimut: solo tiene efecto si el panel está inclinado
+  const lev = Math.sin(S.beta);
+  if (Math.abs(lev) > Math.sin(4 * D2R)) {
+    if (!S.movingAz && Math.abs(S.eHf) > P.deadOn) S.movingAz = true;
+    if (S.movingAz) {
+      if (Math.abs(S.eH) < P.deadOff) S.movingAz = false;
+      else {
+        const mv = Math.min(step, 0.8 * Math.abs(S.eH) * 0.3 / Math.max(dirFrac, 0.2) / Math.abs(lev));
+        const np = clamp(S.psi + Math.sign(S.eH * lev) * mv, AZ_MIN, AZ_MAX);
+        if (np === S.psi) S.movingAz = false;
+        S.psi = np;
+      }
+    }
+  } else S.movingAz = false;
+  if (wasIdle && (S.movingAz || S.movingEl)) S.corrections++;
+  const atLimit = (Math.abs(S.eTf) > P.deadOn && Math.abs(Math.abs(S.beta) - EL_MAX) < 1e-3) || (Math.abs(S.eHf) > P.deadOn && Math.abs(Math.abs(S.psi) - AZ_MAX) < 1e-3);
+  S.mode = (S.movingAz || S.movingEl) ? 'seguimiento' : atLimit ? 'en el límite (±60°)' : 'banda muerta';
+}
+
+/* ───────── paso de simulación ───────── */
+function step(dt) {
+  S.t += dt;
+  const sun = sunAt(S.t % 24); S.sun = sun;
+  S.prevCloud = S.cloudNow;
+  S.cloudNow = cloudAt(S.t, S.cover);
+  const irr = irradiance(sun, S.cloudNow); S.irr = irr;
+  panelAxes(S.psi, S.beta);
+  if (dt > 0) trackerStep(dt, sun, irr);
+  panelAxes(S.psi, S.beta);
+  S.G = poa(nV, sun, irr); S.Gfix = poa(nFix, sun, irr);
+
+  if (S.scen && S.scen.events) for (const ev of S.scen.events) {
+    if (!ev.done && S.t >= ev.h) { ev.done = true; applySettings(ev.set, true); if (ev.msg) addLog(ev.msg); }
+  }
+
+  S.Ipv = P.isc * S.G / 1000; S.IpvFix = P.isc * S.Gfix / 1000;
+  const taper = clamp((1 - S.soc) / 0.08, 0, 1);
+  S.Iacc = S.Ipv * taper;
+
+  const lampOn = S.lamp && !S.lvd, usbOn = S.usb && !S.lvd;
+  let pUsb = 0;
+  for (const ph of S.phones) {
+    let p = 0;
+    if (usbOn) p = ph.soc < 0.8 ? P.phoneW : P.phoneW * clamp((1 - ph.soc) / 0.2, 0, 1);
+    ph.p = p; ph.soc = clamp(ph.soc + p * dt / P.phoneWh, 0, 1); pUsb += p;
+  }
+  if (usbOn) pUsb = pUsb / P.etaUsb + 0.1;
+
+  // política de la RPi (STM32)
+  const wasRpi = S.rpi;
+  if (S.lvd) S.rpi = false;
+  else if (S.rpi) { if (S.surplusF < 1 && S.soc < 0.5) S.rpi = false; }
+  else if (S.surplusF > 3 || S.soc > 0.7) S.rpi = true;
+  if (wasRpi !== S.rpi && dt > 0) addLog(S.rpi ? 'STM32 enciende la Raspberry Pi' : 'STM32 apaga la Raspberry Pi');
+  S.rpiBusy = S.rpi && ((S.t * 60) % 10 < 2);
+
+  const coils = (lampOn ? 1 : 0) + (usbOn ? 1 : 0) + (S.lvd ? 0 : 1);
+  const pRpi = S.rpi ? (S.rpiBusy ? P.rpiBusy : P.rpiIdle) : 0;
+  const p5 = (P.stm + P.lcd + coils * P.coil + pRpi) / P.eta5;
+  const nMov = (S.movingAz ? 1 : 0) + (S.movingEl ? 1 : 0);
+  const p6 = (nMov * P.servoMove + P.servoHold) / P.eta6;
+  const pLoad = (lampOn ? P.lamp : 0) + pUsb + p5 + p6 + P.ctrlSelf;
+  S.p5 = p5; S.p6 = p6; S.pUsb = pUsb; S.pRpi = pRpi;
+
+  const Iload = pLoad / Math.max(10.5, S.V);
+  S.Ib = S.Iacc - Iload;
+  S.soc = clamp(S.soc + S.Ib * dt * (S.Ib > 0 ? P.etaCh : 1) / P.cap, 0, 1);
+  S.V = ocv(S.soc) + S.Ib * P.rInt + (S.Ib > 0 ? 1.6 * Math.pow(S.soc, 8) : 0);
+  S.Pavail = S.Ipv * S.V; S.PfixAvail = S.IpvFix * S.V; S.Pgen = S.Iacc * S.V; S.Pload = pLoad;
+  S.surplus = S.Pavail - pLoad;
+  S.surplusEx = S.surplus + pRpi / P.eta5;
+  // el STM32 decide con el excedente promediado (τ ≈ 5 min): los picos de los servos no cuentan
+  S.surplusF += (S.surplusEx - S.surplusF) * (1 - Math.exp(-dt * 3600 / 300));
+  S.E.cap += S.Pavail * dt; S.E.fix += S.PfixAvail * dt; S.E.load += pLoad * dt;
+  S.temp = 21 + 5 * Math.max(0, Math.sin((S.t % 24 - 8) / 12 * Math.PI)) + 0.6 * Math.max(0, S.Ib);
+
+  // corte por bajo voltaje (relé 3)
+  if (!S.lvd) {
+    if (S.V < P.lvdOff) { S.lvdT += dt; if (S.lvdT > P.lvdDelay) { S.lvd = true; S.lvdEvents++; addLog('Relé 3 abre: corte por bajo voltaje (' + fmt(S.V, 2) + ' V)'); } }
+    else S.lvdT = 0;
+  } else if (S.V - S.Ib * P.rInt >= P.lvdOn) { S.lvd = false; S.lvdT = 0; addLog('Relé 3 cierra: batería recuperada'); }
+
+  const span = S.scen ? S.scen.dur / 320 : 5 / 60;
+  if (S.t - S.lastSample >= span) {
+    S.lastSample = S.t;
+    S.hist.push({ t: S.t, pa: S.Pavail, pf: S.PfixAvail, pl: S.Pload, soc: S.soc });
+    if (S.hist.length > 700) S.hist.splice(0, S.hist.length - 700);
+  }
+}
+
+/* ───────── situaciones ───────── */
+const ESC = [
+  { id: 'soleado', n: 'Día soleado: seguidor vs. panel fijo', short: '08:00 → 16:00 · despejado', t0: 8, dur: 8, cover: 0, soc: 0.45,
+    lamp: false, usb: true, phones: [0.3], speed: 1200, align: true, cam: 'seguidor', lid: 'cerrada',
+    obs: 'Compara la línea ámbar (seguidor) con la gris (panel fijo a 10° al sur). En Bogotá el sol pasa casi por el cenit, así que al mediodía casi no hay ganancia. La ganancia aparece en la mañana y en la tarde, cuando el panel fijo recibe el sol muy de lado.' },
+  { id: 'amanecer', n: 'Amanecer: vuelta al este', short: '05:20 → 07:00 · despejado', t0: 5.33, dur: 1.67, cover: 0, soc: 0.55,
+    lamp: true, usb: false, phones: [], speed: 60, pose: { az: 270, el: 50 }, night: true, cam: 'seguidor', lid: 'cerrada',
+    events: [{ h: 6.1, set: { lamp: false }, msg: 'Se apaga la lámpara' }],
+    obs: 'El seguidor terminó ayer mirando al oeste y pasó la noche quieto, sin gastar energía. Cuando las LDR detectan luz útil, el STM32 lo devuelve al este con una rampa suave y después sigue al sol con el error de las LDR.' },
+  { id: 'nubes', n: 'Nubes pasajeras', short: '10:30 → 12:00 · 50 % nubes', t0: 10.5, dur: 1.5, cover: 0.5, soc: 0.6,
+    lamp: false, usb: true, phones: [0.4], speed: 60, align: true, cam: 'seguidor', lid: 'cerrada',
+    obs: 'Con cada nube la corriente del panel cae a menos de la mitad. El borde de la nube sombrea primero unas LDR que otras y el error crudo salta, pero el filtro (τ ≈ 20 s) y la banda muerta (≈ 2°) evitan que los servos persigan ese ruido: el seguidor hace más o menos las mismas correcciones que con cielo despejado.' },
+  { id: 'noche', n: 'Noche de apagón', short: '19:00 → 06:00 · lámpara + 2 celulares', t0: 19, dur: 11, cover: 0, soc: 1.0,
+    lamp: true, usb: true, phones: [0.15, 0.25], speed: 1200, pose: { az: 270, el: 50 }, night: true, cam: 'caja', lid: 'transparente',
+    events: [{ h: 22, set: { lamp: false }, msg: 'Se apaga la lámpara (22:00)' }],
+    obs: 'Sin sol todo sale de la batería: 2 celulares (~29 Wh), la lámpara hasta las 22:00 (15 Wh) y la lógica. Con 7 Ah (84 Wh nominales) la batería llega al amanecer cerca del 30 %. Cuando no hay excedente y el SoC baja del 50 %, el STM32 apaga la Raspberry Pi para ahorrar.' },
+  { id: 'bateria', n: 'Batería baja: corte LVD', short: '21:00 → 13:00 · SoC 32 %', t0: 21, dur: 16, cover: 0, soc: 0.32,
+    lamp: true, usb: true, phones: [0.2, 0.1], speed: 1200, pose: { az: 270, el: 50 }, night: true, cam: 'caja', lid: 'transparente',
+    obs: 'Con lámpara y dos celulares el voltaje cae por debajo de 11,8 V. El relé 3 corta las cargas y el STM32 apaga la Raspberry Pi; quedan solo el STM32 y el LCD. Al día siguiente el panel recarga y el relé reconecta cuando el voltaje en reposo estimado llega a 12,4 V.' },
+  { id: 'emergencia', n: 'Día de emergencia (24 h)', short: '00:00 → 24:00 · nubes 35 %', t0: 0, dur: 24, cover: 0.35, soc: 0.6,
+    lamp: false, usb: true, phones: [], speed: 2400, pose: { az: 270, el: 50 }, night: true, cam: 'general', lid: 'cerrada',
+    events: [
+      { h: 5, set: { lamp: true }, msg: 'Lámpara encendida (05:00)' },
+      { h: 6.25, set: { lamp: false }, msg: 'Lámpara apagada' },
+      { h: 7.5, set: { phones: [0.2, 0.3] }, msg: 'Se conectan 2 celulares' },
+      { h: 13, set: { phones: [0.25] }, msg: 'Se conecta otro celular' },
+      { h: 18, set: { lamp: true }, msg: 'Lámpara encendida (18:00)' },
+      { h: 19, set: { phones: [0.15, 0.2] }, msg: 'Se conectan 2 celulares' },
+      { h: 22.5, set: { lamp: false }, msg: 'Lámpara apagada' },
+    ],
+    obs: 'Un día completo con uso típico de emergencia: luz al amanecer y en la noche, y tandas de celulares. Con 6 cargas de celular y ~4 h de lámpara se consumen ~130–140 Wh y el panel capta ~110–140 Wh. La AGM de 7 Ah no alcanza a cubrir el desfase entre el día y la noche, y el corte por bajo voltaje actúa: es un argumento para ampliar la batería o limitar las cargas desde el agente.' },
+];
+
+function applySettings(set, fromEvent) {
+  if ('lamp' in set) S.lamp = set.lamp;
+  if ('usb' in set) S.usb = set.usb;
+  if ('phones' in set) S.phones = set.phones.map((s) => ({ soc: s, p: 0 }));
+  syncControls();
+}
+
+function loadScenario(id, opts = {}) {
+  const sc = ESC.find((e) => e.id === id);
+  if (!sc) return;
+  const scen = { ...sc, events: (sc.events || []).map((e) => ({ ...e, done: false })) };
+  S.scen = scen; S.done = false;
+  S.t = sc.t0; S.cover = sc.cover; S.soc = sc.soc; S.socStart = sc.soc;
+  S.lamp = sc.lamp; S.usb = sc.usb; S.phones = sc.phones.map((s) => ({ soc: s, p: 0 }));
+  S.speed = sc.speed; S.track = true; S.lvd = false; S.lvdT = 0; S.lvdEvents = 0; S.corrections = 0;
+  S.movingAz = S.movingEl = false; S.night = !!sc.night; S.nightT = sc.night ? 1 : 0; S.mode = 'seguimiento';
+  S.E = { cap: 0, fix: 0, load: 0 }; S.hist = []; S.lastSample = -1e9; S.log = [];
+  S.cloudNow = cloudAt(S.t, S.cover); S.prevCloud = S.cloudNow;
+  if (sc.pose) { S.psi = (180 - sc.pose.az) * D2R; S.beta = sc.pose.el * D2R; }
+  else { const p = poseFor(sunAt(S.t % 24)); S.psi = clamp(p.psi, AZ_MIN, AZ_MAX); S.beta = p.beta; }
+  S.V = ocv(S.soc); S.surplus = S.surplusEx = 0; S.rpi = S.soc > 0.7; S.eTf = S.eHf = 0;
+  step(0);
+  S.surplusF = S.surplusEx; S.rpi = !S.lvd && (S.surplusF > 3 || S.soc > 0.7);
+  S.run = true;
+  setLid(sc.lid); if (!opts.keepCam) setCam(sc.cam);
+  document.querySelectorAll('.mission').forEach((b) => b.classList.toggle('active', b.dataset.id === id));
+  $('#esc-eyebrow').textContent = 'Situación ' + (ESC.indexOf(sc) + 1) + ' de ' + ESC.length;
+  $('#esc-title').textContent = sc.n;
+  $('#esc-obs').textContent = sc.obs;
+  $('#esc-summary').hidden = true;
+  renderLog(); syncControls();
+  try { const u = new URL(location.href); u.searchParams.set('escenario', id); history.replaceState(null, '', u); } catch (e) {}
+}
+
+function finishScenario() {
+  S.run = false; S.done = true;
+  const sc = S.scen, gain = S.E.fix > 0.5 ? (S.E.cap / S.E.fix - 1) * 100 : 0;
+  const el = $('#esc-summary');
+  el.innerHTML = '<strong>Resumen (' + fmt(sc.dur, 1) + ' h)</strong><br>' +
+    'Seguidor: ' + fmt(S.E.cap, 0) + ' Wh · panel fijo: ' + fmt(S.E.fix, 0) + ' Wh' + (S.E.fix > 0.5 ? ' (' + (gain >= 0 ? '+' : '') + fmt(gain, 0) + ' %)' : '') + '<br>' +
+    'Consumo: ' + fmt(S.E.load, 0) + ' Wh · batería ' + Math.round(S.socStart * 100) + ' % → ' + Math.round(S.soc * 100) + ' %<br>' +
+    'Cortes por bajo voltaje: ' + S.lvdEvents + ' · correcciones del seguidor: ' + S.corrections;
+  el.hidden = false;
+  syncControls();
+}
+
+/* ───────── escena ───────── */
+const canvas = $('#scene');
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+} catch (e) {
+  $('#loading').textContent = 'Este navegador no tiene WebGL disponible, así que no se puede mostrar la escena 3D.';
+  throw e;
+}
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0x87bde6, 25, 90);
+const camera = new THREE.PerspectiveCamera(42, 1, 0.03, 300);
+camera.position.set(2.2, 1.5, 2.4);
+const controls = new OrbitControls(camera, canvas);
+controls.target.set(0.1, 0.3, 0);
+controls.enableDamping = true;
+controls.minDistance = 0.25; controls.maxDistance = 9; controls.maxPolarAngle = 88 * D2R;
+
+const hemi = new THREE.HemisphereLight(0xcfe6ff, 0x2a3326, 0.8);
+scene.add(hemi);
+const sunLight = new THREE.DirectionalLight(0xfff1dc, 3);
+sunLight.castShadow = true;
+sunLight.shadow.mapSize.set(2048, 2048);
+Object.assign(sunLight.shadow.camera, { left: -2.2, right: 2.2, top: 2.2, bottom: -2.2, near: 0.5, far: 20 });
+sunLight.shadow.bias = -0.0004; sunLight.shadow.normalBias = 0.01;
+scene.add(sunLight); scene.add(sunLight.target);
+sunLight.target.position.set(0.1, 0, 0);
+
+// suelo
+const ground = new THREE.Mesh(new THREE.CircleGeometry(40, 64), new THREE.MeshStandardMaterial({ color: 0x55624f, roughness: 0.95 }));
+ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+const pad = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.02, 2.4), new THREE.MeshStandardMaterial({ color: 0x8b8f86, roughness: 0.9 }));
+pad.position.set(0.15, -0.009, 0.1); pad.receiveShadow = true; scene.add(pad);
+const grid = new THREE.GridHelper(3.4, 34, 0x6c7168, 0x6c7168);
+grid.scale.z = 2.4 / 3.4; grid.position.set(0.15, 0.002, 0.1); grid.material.transparent = true; grid.material.opacity = 0.25; scene.add(grid);
+
+function textSprite(txt, color = '#ffffff', size = 0.22, bg = null) {
+  const c = document.createElement('canvas'); c.width = 256; c.height = 128;
+  const g = c.getContext('2d');
+  if (bg) { g.fillStyle = bg; g.beginPath(); g.roundRect(8, 24, 240, 80, 20); g.fill(); }
+  g.fillStyle = color; g.font = '600 64px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(txt, 128, 66);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthWrite: false }));
+  s.scale.set(size * 2, size, 1); return s;
+}
+[['N', 0, -1.7], ['S', 0, 1.9], ['E', 2.1, 0], ['O', -1.9, 0]].forEach(([l, x, z]) => {
+  const s = textSprite(l, '#f5f0e0', 0.2); s.position.set(x, 0.06, z); scene.add(s);
+});
+
+// materiales
+const M = {
+  abs: new THREE.MeshStandardMaterial({ color: 0xdfe3e4, roughness: 0.65, transparent: true }),
+  absLid: new THREE.MeshStandardMaterial({ color: 0xe8ebec, roughness: 0.6, transparent: true }),
+  alu: new THREE.MeshStandardMaterial({ color: 0xc3c9cf, metalness: 0.65, roughness: 0.38 }),
+  dark: new THREE.MeshStandardMaterial({ color: 0x1d2124, roughness: 0.6 }),
+  black: new THREE.MeshStandardMaterial({ color: 0x0f1112, roughness: 0.5 }),
+  rubber: new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.95 }),
+  silver: new THREE.MeshStandardMaterial({ color: 0xb8bcc0, metalness: 0.8, roughness: 0.3 }),
+  brass: new THREE.MeshStandardMaterial({ color: 0xb58f3c, metalness: 0.8, roughness: 0.35 }),
+  pcbGreen: new THREE.MeshStandardMaterial({ color: 0x1f7a3d, roughness: 0.55 }),
+  pcbBlue: new THREE.MeshStandardMaterial({ color: 0x1f4ea8, roughness: 0.55 }),
+  pcbPurple: new THREE.MeshStandardMaterial({ color: 0x6a2d8f, roughness: 0.55 }),
+  relay: new THREE.MeshStandardMaterial({ color: 0x2f6fd6, roughness: 0.35 }),
+  terminal: new THREE.MeshStandardMaterial({ color: 0x2e9a50, roughness: 0.5 }),
+  red: new THREE.MeshStandardMaterial({ color: 0xc8322b, roughness: 0.5 }),
+  acrylic: new THREE.MeshStandardMaterial({ color: 0xcfe8ff, roughness: 0.1, transparent: true, opacity: 0.35, depthWrite: false }),
+  cableR: new THREE.MeshStandardMaterial({ color: 0xb3261e, roughness: 0.6 }),
+  cableB: new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.6 }),
+  ldr: new THREE.MeshStandardMaterial({ color: 0xd9622b, roughness: 0.4 }),
+  yellow: new THREE.MeshStandardMaterial({ color: 0xe8c33a, roughness: 0.5 }),
+};
+const emissive = (color) => new THREE.MeshStandardMaterial({ color: 0x222222, emissive: color, emissiveIntensity: 0, roughness: 0.4 });
+
+const PICK = {}; // clave → objeto raíz
+function shadowed(o) { o.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); return o; }
+function pickable(o, key) { o.traverse((m) => { m.userData.pick = key; }); (PICK[key] ||= []).push(o); return o; }
+function box(w, h, d, mat, x = 0, y = 0, z = 0, parent = scene) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(mm(w), mm(h), mm(d)), mat);
+  m.position.set(mm(x), mm(y), mm(z)); m.castShadow = m.receiveShadow = true; parent.add(m); return m;
+}
+function cyl(r, h, mat, x = 0, y = 0, z = 0, parent = scene, axis = 'y', seg = 24) {
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(mm(r), mm(r), mm(h), seg), mat);
+  m.position.set(mm(x), mm(y), mm(z));
+  if (axis === 'x') m.rotation.z = Math.PI / 2; else if (axis === 'z') m.rotation.x = Math.PI / 2;
+  m.castShadow = m.receiveShadow = true; parent.add(m); return m;
+}
+function group(x = 0, y = 0, z = 0, parent = scene) { const g = new THREE.Group(); g.position.set(mm(x), mm(y), mm(z)); parent.add(g); return g; }
+function cable(points, mat, r = 3) {
+  const curve = new THREE.CatmullRomCurve3(points.map((p) => new THREE.Vector3(mm(p[0]), mm(p[1]), mm(p[2]))));
+  const m = new THREE.Mesh(new THREE.TubeGeometry(curve, 64, mm(r), 8, false), mat);
+  m.castShadow = true; scene.add(m); return m;
+}
+function canvasTex(w, h, draw) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  draw(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+  return { c, t, g: c.getContext('2d') };
+}
+
+/* ── panel: textura de celdas 4 × 9 ── */
+const cells = canvasTex(256, 320, (g, w, h) => {
+  g.fillStyle = '#c9d0d6'; g.fillRect(0, 0, w, h);
+  const cw = (w - 20) / 4, ch = (h - 20) / 9;
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 9; j++) {
+    const x = 10 + i * cw, y = 10 + j * ch;
+    g.fillStyle = '#16264a'; g.fillRect(x + 1.5, y + 1.5, cw - 3, ch - 3);
+    g.strokeStyle = 'rgba(190,200,220,.55)'; g.lineWidth = 1;
+    for (let k = 1; k <= 2; k++) { g.beginPath(); g.moveTo(x + cw * k / 3, y + 2); g.lineTo(x + cw * k / 3, y + ch - 2); g.stroke(); }
+  }
+});
+
+/* ── SEGUIDOR DE 2 EJES ── */
+const TRK = { x: 550, z: -350 };
+const tracker = group(TRK.x, 0, TRK.z);
+const base = group(0, 0, 0, tracker);
+box(500, 20, 20, M.alu, 0, 10, 0, base);
+box(20, 20, 500, M.alu, 0, 10, 0, base);
+[[-240, 0], [240, 0], [0, -240], [0, 240]].forEach(([x, z]) => box(28, 4, 28, M.rubber, x, 2, z, base));
+box(150, 5, 150, M.alu, 0, 22.5, 0, base);
+box(40, 300, 40, M.alu, 0, 175, 0, base);
+cyl(75, 5, M.silver, 0, 327.5, 0, base, 'y', 40);
+pickable(base, 'base');
+const servoAz = group(0, 0, 0, tracker);
+box(42, 40, 20, M.black, 0, 300, 31, servoAz);
+box(55, 3, 20, M.black, 0, 312, 31, servoAz);
+pickable(servoAz, 'servoAz');
+
+const yaw = group(0, 330, 0, tracker);
+cyl(75, 5, M.silver, 0, 7.5, 0, yaw, 'y', 40);
+box(440, 6, 60, M.alu, 0, 13, 0, yaw);
+box(6, 229, 50, M.alu, -203, 130.5, 0, yaw);
+box(6, 229, 50, M.alu, 203, 130.5, 0, yaw);
+const bearing = cyl(11, 7, M.silver, -212, 220, 0, yaw, 'x');
+pickable(bearing, 'base');
+const servoEl = group(0, 0, 0, yaw);
+box(20, 41, 43, M.black, 216, 220, 0, servoEl);
+box(3, 55, 43, M.black, 216, 220, 0, servoEl);
+pickable(servoEl, 'servoEl');
+pickable(yaw.children[1], 'base'); pickable(yaw.children[2], 'base'); pickable(yaw.children[3], 'base'); pickable(yaw.children[0], 'base');
+
+const tilt = group(0, 220, 0, yaw);
+cyl(4, 412, M.silver, 0, 0, 0, tilt, 'x');
+const panelG = group(0, 0, 0, tilt);
+box(350, 25, 440, M.alu, 0, 0, 0, panelG);
+const glass = new THREE.Mesh(new THREE.PlaneGeometry(mm(340), mm(430)), new THREE.MeshStandardMaterial({ map: cells.t, roughness: 0.18, metalness: 0.2 }));
+glass.rotation.x = -Math.PI / 2; glass.position.y = mm(12.7); glass.receiveShadow = true; panelG.add(glass);
+box(80, 18, 60, M.black, 0, -21, 60, panelG);
+pickable(panelG, 'panel');
+const ldrG = group(0, 13, -236, panelG);
+box(46, 4, 46, M.dark, 0, 2, 0, ldrG);
+const d1 = box(62, 34, 1.6, M.black, 0, 21, 0, ldrG); d1.rotation.y = Math.PI / 4;
+const d2 = box(62, 34, 1.6, M.black, 0, 21, 0, ldrG); d2.rotation.y = -Math.PI / 4;
+[[0, -13], [0, 13], [-13, 0], [13, 0]].forEach(([x, z]) => cyl(2.6, 2, M.ldr, x, 5, z, ldrG));
+box(30, 6, 14, M.dark, 0, -3, 10, ldrG);
+pickable(ldrG, 'ldr');
+
+/* ── PANEL FIJO DE REFERENCIA (virtual) ── */
+const refG = group(1330, 0, 520);
+const ghost = new THREE.MeshStandardMaterial({ color: 0x9fb4c7, transparent: true, opacity: 0.38, roughness: 0.4, depthWrite: false });
+const ghostCells = new THREE.MeshStandardMaterial({ map: cells.t, transparent: true, opacity: 0.55, roughness: 0.3, depthWrite: false });
+box(20, 260, 20, ghost, -150, 130, -150, refG); box(20, 260, 20, ghost, 150, 130, -150, refG);
+box(20, 200, 20, ghost, -150, 100, 150, refG); box(20, 200, 20, ghost, 150, 100, 150, refG);
+const refTilt = group(0, 240, 0, refG); refTilt.rotation.x = P.fixedTilt * D2R;
+box(350, 25, 440, ghost, 0, 0, 0, refTilt);
+const ghostGlass = new THREE.Mesh(new THREE.PlaneGeometry(mm(340), mm(430)), ghostCells);
+ghostGlass.rotation.x = -Math.PI / 2; ghostGlass.position.y = mm(12.7); refTilt.add(ghostGlass);
+const refLabel = textSprite('panel fijo', '#e9eef2', 0.07, 'rgba(15,30,35,.75)'); refLabel.position.set(0, mm(420), 0); refG.add(refLabel);
+refG.traverse((m) => { if (m.isMesh) m.castShadow = false; });
+pickable(refG, 'fijo');
+
+/* ── CAJA DE CONTROL 306 × 176 × 121 ── */
+const BOX = { x: -450, z: 350 };
+const caja = group(BOX.x, 6, BOX.z);
+[[-140, -75], [140, -75], [-140, 75], [140, 75]].forEach(([x, z]) => cyl(8, 6, M.rubber, x, -3, z, caja));
+const shell = group(0, 0, 0, caja);
+box(306, 3, 176, M.abs, 0, 1.5, 0, shell);
+box(306, 115, 3, M.abs, 0, 60.5, 86.5, shell);
+box(306, 115, 3, M.abs, 0, 60.5, -86.5, shell);
+box(3, 115, 170, M.abs, -151.5, 60.5, 0, shell);
+box(3, 115, 170, M.abs, 151.5, 60.5, 0, shell);
+for (let i = 0; i < 5; i++) { box(1, 40, 4, M.black, -153.2, 60, -40 + i * 12, shell); box(1, 40, 4, M.black, 153.2, 60, -40 + i * 12, shell); }
+pickable(shell, 'caja');
+const lid = group(0, 0, 0, caja);
+box(306, 3, 176, M.absLid, 0, 119.5, 0, lid);
+box(10, 22, 10, M.dark, -45, 132, 0, lid); box(10, 22, 10, M.dark, 45, 132, 0, lid);
+cyl(5, 100, M.silver, 0, 140, 0, lid, 'x');
+pickable(lid, 'caja');
+
+// frente: LCD, interruptores, USB
+const lcdTex = canvasTex(256, 64, () => {});
+const lcdG = group(-88, 76, 88, caja);
+box(80, 36, 2, M.pcbGreen, 0, 0, 0, lcdG);
+box(76, 28, 3, M.black, 0, 0, 1.5, lcdG);
+const lcdScreen = new THREE.Mesh(new THREE.PlaneGeometry(mm(66), mm(17)), new THREE.MeshBasicMaterial({ map: lcdTex.t, toneMapped: false }));
+lcdScreen.position.set(0, 0, mm(3.1)); lcdG.add(lcdScreen);
+pickable(lcdG, 'lcd');
+const swLabels = canvasTex(256, 32, (g) => { g.fillStyle = '#3c4447'; g.font = '700 20px system-ui'; g.textAlign = 'center'; g.fillText('LUZ', 43, 23); g.fillText('USB', 128, 23); g.fillText('GENERAL', 213, 23); });
+const swLab = new THREE.Mesh(new THREE.PlaneGeometry(mm(96), mm(12)), new THREE.MeshBasicMaterial({ map: swLabels.t, transparent: true }));
+swLab.position.set(mm(18), mm(84), mm(88.2)); caja.add(swLab);
+const switches = [];
+['swLuz', 'swUsb', 'swGen'].forEach((k, i) => {
+  const g = group(-14 + i * 32, 62, 88, caja);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(mm(8), mm(1.6), 10, 28), emissive(0x7ee08a));
+  ring.position.z = mm(1); g.add(ring);
+  cyl(7, 3, M.dark, 0, 0, 1.5, g, 'z');
+  const lever = box(4, 12, 4, M.silver, 0, 4, 6, g);
+  lever.geometry.translate(0, mm(-4), 0); lever.position.y = 0;
+  switches.push({ g, ring, lever, key: k });
+  pickable(g, k);
+});
+const usbG = group(104, 62, 88, caja);
+[0, 22].forEach((dx) => { box(15, 8, 2, M.silver, dx, 0, 0, usbG); box(12, 5, 1, M.black, dx, 0, 1, usbG); box(10, 1.6, 1.2, M.relay, dx, 1, 1.4, usbG); });
+const qcBoard = box(40, 30, 1.6, M.pcbBlue, 11, 0, -6, usbG);
+pickable(usbG, 'usb');
+// prensaestopas
+const glandR = cyl(7, 12, M.dark, 158, 85, 0, caja, 'x');
+const glands = [-60, 0, 60].map((x) => cyl(7, 12, M.dark, x, 95, -94, caja, 'z'));
+pickable(glandR, 'caja'); glands.forEach((g) => pickable(g, 'caja'));
+
+// interior
+const batG = group(-70, 50, -50, caja);
+box(151, 94, 65, M.dark, 0, 0, 0, batG);
+const batLabel = canvasTex(256, 160, (g, w, h) => {
+  g.fillStyle = '#272c30'; g.fillRect(0, 0, w, h); g.fillStyle = '#f5b84a'; g.fillRect(0, 0, w, 26);
+  g.fillStyle = '#1c1405'; g.font = '700 18px system-ui'; g.fillText('SEALED LEAD-ACID', 12, 19);
+  g.fillStyle = '#e6eaec'; g.font = '800 46px system-ui'; g.fillText('AGM', 14, 82);
+  g.font = '600 26px system-ui'; g.fillText('12 V  7 Ah', 14, 124);
+});
+const batFace = new THREE.Mesh(new THREE.PlaneGeometry(mm(120), mm(75)), new THREE.MeshStandardMaterial({ map: batLabel.t, roughness: 0.6 }));
+batFace.position.set(0, 0, mm(32.6)); batG.add(batFace);
+box(8, 6, 8, M.red, -55, 50, -15, batG); box(8, 6, 8, M.black, 55, 50, -15, batG);
+pickable(batG, 'bateria');
+const dsG = group(-20, 50, -16.5, caja);
+cyl(2.4, 5, M.black, 0, 0, 0, dsG, 'z');
+pickable(dsG, 'ds18b20');
+
+const ctrlG = group(76, 20.5, -48, caja);
+box(133, 35, 70, new THREE.MeshStandardMaterial({ color: 0x2a5f8f, roughness: 0.5 }), 0, 0, 0, ctrlG);
+box(40, 1, 20, M.black, -20, 17.7, 0, ctrlG);
+const ctrlLeds = [emissive(0x7ee08a), emissive(0xf5b84a), emissive(0xff5d4f)];
+ctrlLeds.forEach((m, i) => { const l = new THREE.Mesh(new THREE.SphereGeometry(mm(2.2), 12, 8), m); l.position.set(mm(18 + i * 10), mm(18), 0); ctrlG.add(l); });
+[[-58, 0x2e9a50], [58, 0x2e9a50]].forEach(([x]) => box(14, 12, 50, M.terminal, x, 6, 0, ctrlG));
+pickable(ctrlG, 'controlador');
+
+const plate = group(0, 16.5, 42, caja);
+box(290, 3, 80, M.acrylic, 0, 0, 0, plate);
+[[-140, -36], [140, -36], [-140, 36], [140, 36]].forEach(([x, z]) => cyl(2.5, 12, M.brass, x, -7.5, z, plate));
+
+// Raspberry Pi Zero 2 W
+const rpiG = group(-104, 6, -18, plate);
+box(65, 1.4, 30, M.pcbGreen, 0, 0, 0, rpiG);
+box(14, 1.4, 14, M.silver, 0, 1.4, 1, rpiG);
+box(51, 8.5, 5, M.black, 0, 5, -12, rpiG);
+box(12, 1.5, 11, M.silver, -27, 1.4, -2, rpiG);
+box(11, 3.5, 7, M.silver, -20, 2.2, 12, rpiG);
+box(8, 3, 6, M.silver, 10, 2, 12, rpiG); box(8, 3, 6, M.silver, 22, 2, 12, rpiG);
+const rpiLedMat = emissive(0x6dff8f);
+const rpiLed = box(2, 1, 1.5, rpiLedMat, 28, 1.2, 6, rpiG);
+pickable(rpiG, 'rpi');
+// STM32 Blue Pill
+const stmG = group(-32, 6, -18, plate);
+box(53, 1.6, 23, M.pcbBlue, 0, 0, 0, stmG);
+box(48, 2.5, 2.5, M.black, 0, 2, 10, stmG); box(48, 2.5, 2.5, M.black, 0, 2, -10, stmG);
+box(7, 1.2, 7, M.black, 0, 1.4, 0, stmG);
+box(4, 3, 5, M.yellow, -18, 2.4, 0, stmG); box(4, 3, 5, M.yellow, -12, 2.4, 0, stmG);
+const stmLed = box(1.6, 1, 1.2, emissive(0xff4d4d), 18, 1.2, 6, stmG);
+pickable(stmG, 'stm32');
+// INA226
+const inaG = group(20, 6, -18, plate);
+box(25, 1.6, 20, M.pcbPurple, 0, 0, 0, inaG);
+box(10, 8, 7, M.terminal, 6, 4.5, 4, inaG); box(3, 1, 3, M.black, -5, 1.2, -2, inaG);
+pickable(inaG, 'ina226');
+// LM2596 ×2
+function lm2596(x, key) {
+  const g = group(x, 6, -18, plate);
+  box(43, 1.6, 21, M.pcbBlue, 0, 0, 0, g);
+  cyl(6, 7, M.black, -4, 4.3, 0, g); box(9, 5, 9, M.relay, 13, 3.3, -4, g);
+  cyl(4, 10, M.black, -16, 5.8, -5, g); cyl(4, 10, M.black, 16, 5.8, 5, g);
+  pickable(g, key); return g;
+}
+lm2596(70, 'lm5'); lm2596(121, 'lm6');
+// relés
+const relayLeds = [];
+['rele1', 'rele2', 'rele3'].forEach((k, i) => {
+  const g = group(-112 + i * 50, 6, 20, plate);
+  box(40, 1.6, 26, M.pcbBlue, 0, 0, 0, g);
+  box(19, 15, 15, M.relay, -4, 8.3, 0, g);
+  box(10, 8, 15, M.terminal, 14, 4.8, 0, g);
+  const m = emissive(0xff4d4d); relayLeds.push(m);
+  box(2, 1.2, 2, m, -16, 1.4, 9, g);
+  pickable(g, k);
+});
+const bornG = group(52, 6, 22, plate);
+box(52, 10, 10, M.terminal, 0, 5, 0, bornG);
+for (let i = 0; i < 6; i++) cyl(2, 2, M.silver, -21 + i * 8.4, 10.5, 0, bornG);
+pickable(bornG, 'bornera');
+const fuseG = group(110, 6, 22, plate);
+cyl(6, 46, M.black, 0, 6, 0, fuseG, 'x'); cyl(6.6, 8, M.red, 18, 6, 0, fuseG, 'x');
+pickable(fuseG, 'fusible');
+
+// lámpara LED 12 V sobre trípode
+const LAMP = { x: -1080, z: -120 };
+const lampG = group(LAMP.x, 0, LAMP.z);
+cyl(8, 900, M.dark, 0, 450, 0, lampG);
+[0, 120, 240].forEach((a) => { const leg = box(10, 420, 10, M.dark, 0, 0, 0, lampG); leg.position.set(mm(120 * Math.sin(a * D2R)), mm(180), mm(120 * Math.cos(a * D2R))); leg.rotation.set(Math.cos(a * D2R) * -0.3, 0, Math.sin(a * D2R) * 0.3); });
+box(170, 34, 60, M.dark, 0, 915, 0, lampG);
+const lampMat = new THREE.MeshStandardMaterial({ color: 0xdedede, emissive: 0xfff3d6, emissiveIntensity: 0, roughness: 0.3 });
+box(160, 3, 50, lampMat, 0, 897, 0, lampG);
+const lampLight = new THREE.PointLight(0xfff0d0, 0, 7, 1.6);
+lampLight.position.set(0, mm(870), 0); lampG.add(lampLight);
+pickable(lampG, 'lampara');
+
+// celulares
+const phones = [];
+[[-330, 640], [-200, 650]].forEach(([x, z], i) => {
+  const g = group(x, 0, z); g.rotation.y = (i ? -0.18 : 0.12);
+  box(72, 8, 150, M.black, 0, 4, 0, g);
+  const tex = canvasTex(64, 128, () => {});
+  const scr = new THREE.Mesh(new THREE.PlaneGeometry(mm(66), mm(138)), new THREE.MeshBasicMaterial({ map: tex.t, toneMapped: false }));
+  scr.rotation.x = -Math.PI / 2; scr.position.y = mm(8.2); g.add(scr);
+  const c = cable([[BOX.x + 104 + i * 22, 68, BOX.z + 95], [BOX.x + 104 + i * 22, 30, BOX.z + 150], [x, 6, z - 110], [x, 6, z - 80]], M.cableB, 2);
+  pickable(g, 'cel');
+  phones.push({ g, tex, cable: c });
+});
+
+// cables fijos
+cable([[BOX.x - 60, 101, BOX.z - 100], [BOX.x - 60, 60, BOX.z - 250], [TRK.x - 300, 8, TRK.z + 150], [TRK.x - 30, 15, TRK.z + 30], [TRK.x - 22, 120, TRK.z], [TRK.x - 22, 300, TRK.z]], M.cableB, 3.5);
+cable([[BOX.x, 101, BOX.z - 100], [BOX.x + 20, 50, BOX.z - 260], [TRK.x - 280, 8, TRK.z + 170], [TRK.x - 25, 15, TRK.z + 40], [TRK.x + 22, 150, TRK.z + 22], [TRK.x + 22, 300, TRK.z + 22]], M.cableR, 3);
+cable([[BOX.x + 165, 91, BOX.z], [BOX.x + 260, 30, BOX.z - 60], [LAMP.x + 600, 6, LAMP.z + 200], [LAMP.x + 60, 6, LAMP.z + 30], [LAMP.x + 10, 60, LAMP.z]], M.cableB, 2.5);
+// cableado interior
+cable([[BOX.x - 15, 106, BOX.z - 65], [BOX.x + 30, 80, BOX.z - 10], [BOX.x + 87, 40, BOX.z - 20], [BOX.x + 110, 34, BOX.z - 20]], M.cableR, 1.6);
+cable([[BOX.x - 125, 106, BOX.z - 65], [BOX.x - 145, 80, BOX.z - 5], [BOX.x - 60, 40, BOX.z + 10], [BOX.x + 50, 34, BOX.z + 22]], M.cableB, 1.6);
+
+/* ── cielo: sol, trayectoria, estrellas, nubes ── */
+const sunMesh = new THREE.Mesh(new THREE.SphereGeometry(1.4, 24, 16), new THREE.MeshBasicMaterial({ color: 0xfff1b0, fog: false, toneMapped: false }));
+scene.add(sunMesh);
+(function sunPath() {
+  const pts = [];
+  for (let h = 5.5; h <= 18.5; h += 0.1) { const s = sunAt(h); if (s.el > -1) pts.push(s.dir.clone().multiplyScalar(3.2).add(new THREE.Vector3(mm(TRK.x), 0.55, mm(TRK.z)))); }
+  const geo = new THREE.BufferGeometry().setFromPoints(pts);
+  const line = new THREE.Line(geo, new THREE.LineDashedMaterial({ color: 0xffd27a, dashSize: 0.06, gapSize: 0.05, transparent: true, opacity: 0.65 }));
+  line.computeLineDistances(); scene.add(line);
+  S.sunPath = line;
+})();
+const starGeo = new THREE.BufferGeometry();
+{ const a = []; for (let i = 0; i < 600; i++) { const th = Math.random() * Math.PI * 2, ph = Math.acos(Math.random() * 0.95); a.push(80 * Math.sin(ph) * Math.cos(th), 80 * Math.cos(ph), 80 * Math.sin(ph) * Math.sin(th)); } starGeo.setAttribute('position', new THREE.Float32BufferAttribute(a, 3)); }
+const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.35, transparent: true, opacity: 0, fog: false, depthWrite: false }));
+scene.add(stars);
+const cloudMat = new THREE.MeshLambertMaterial({ color: 0xf4f6f8, transparent: true, opacity: 0, depthWrite: false, fog: false });
+const clouds = [];
+function makeCloud(scale) {
+  const g = new THREE.Group();
+  for (let i = 0; i < 5; i++) { const s = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 10), cloudMat); s.position.set((i - 2) * 1.1 + Math.random() * 0.4, Math.random() * 0.5, Math.random() * 0.8); s.scale.setScalar(0.9 + Math.random() * 0.8); g.add(s); }
+  g.scale.setScalar(scale); scene.add(g); return g;
+}
+for (let i = 0; i < 9; i++) { const c = makeCloud(1.2 + Math.random()); c.position.set(-40 + i * 9 + Math.random() * 4, 14 + Math.random() * 6, -25 + Math.random() * 45); clouds.push(c); }
+const sunCloudMat = cloudMat.clone();
+const sunCloud = new THREE.Group();
+for (let i = 0; i < 5; i++) { const s = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 10), sunCloudMat); s.position.set((i - 2) * 1.2, (i % 2) * 0.5, 0); s.scale.setScalar(1.3 + (i % 3) * 0.3); sunCloud.add(s); }
+scene.add(sunCloud);
+
+/* ───────── fichas de información ───────── */
+const onOff = (b) => (b ? 'encendido' : 'apagado');
+const W = (x) => fmt(x, 1) + ' W';
+const INFO = {
+  panel: { t: 'Panel solar 12 V · 20 W (supuesto)', d: '440 × 350 mm, marco de aluminio y vidrio templado. Con el controlador PWM el panel queda amarrado al voltaje de la batería: entrega su corriente (≈ Isc·G/1000) a 12,5–14 V y no su punto de máxima potencia.',
+    v: () => [['Irradiancia en el plano', fmt(S.G, 0) + ' W/m²'], ['Corriente', fmt(S.Ipv, 2) + ' A'], ['Potencia disponible', W(S.Pavail)], ['Ángulo de incidencia', fmt(Math.acos(clamp(nV.dot(S.sun.dir), -1, 1)) / D2R, 0) + '°']] },
+  ldr: { t: '4 LDR GL5528 con divisor en X', d: 'El divisor sombrea las LDR del lado contrario al sol. El STM32 las lee por ADC y calcula dos errores diferenciales (izquierda−derecha, arriba−abajo), los filtra y solo mueve los servos si superan la banda muerta.',
+    v: () => [['Error inclinación (crudo / filtrado)', fmt(S.eT, 2) + ' / ' + fmt(S.eTf, 2)], ['Error giro (crudo / filtrado)', fmt(S.eH, 2) + ' / ' + fmt(S.eHf, 2)], ['Banda muerta', '±' + fmt(P.deadOn, 2) + ' (≈ 2°)'], ['Modo', S.mode]] },
+  servoAz: { t: 'Servo MG996R · giro horizontal', d: 'Gira la plataforma sobre el rodamiento tipo lazy susan de 150 mm. El rodamiento carga el peso y el servo solo aporta el par de giro. Recorre de este a oeste pasando por el sur.',
+    v: () => [['Azimut del panel', fmt(compassAz(S.psi), 0) + '°'], ['Estado', S.movingAz ? 'moviéndose' : 'quieto'], ['Potencia', W(S.movingAz ? P.servoMove : P.servoHold / 2)]] },
+  servoEl: { t: 'Servo MG996R · inclinación', d: 'Mueve el eje que pasa por el centro de masa del panel, con un rodamiento 608ZZ en el otro montante. Rango de ±60°.',
+    v: () => [['Inclinación', fmt(S.beta / D2R, 0) + '°'], ['Estado', S.movingEl ? 'moviéndose' : 'quieto'], ['Potencia', W(S.movingEl ? P.servoMove : P.servoHold / 2)]] },
+  base: { t: 'Base, mástil y horquilla', d: 'Cruz de perfil 2020 de 500 × 500 mm, mástil de tubo cuadrado 40 × 40 × 3 mm de ~300 mm y horquilla de aluminio. Altura total ≈ 550 mm con el panel horizontal. Hay que anclarla o lastrarla por el viento.',
+    v: () => [['Sol (az / elev.)', fmt(S.sun.az, 0) + '° / ' + fmt(S.sun.el, 0) + '°']] },
+  fijo: { t: 'Panel fijo de referencia (virtual)', d: 'Solo existe en la simulación: el mismo panel fijo a 10° mirando al sur, para medir la ganancia del seguidor en las mismas condiciones. En el banco de pruebas se haría con el mismo panel, con y sin seguimiento, en la misma franja horaria.',
+    v: () => [['Irradiancia en el plano', fmt(S.Gfix, 0) + ' W/m²'], ['Potencia disponible', W(S.PfixAvail)], ['Energía (situación)', fmt(S.E.fix, 1) + ' Wh'], ['Ganancia del seguidor', S.E.fix > 0.5 ? fmt((S.E.cap / S.E.fix - 1) * 100, 0) + ' %' : '—']] },
+  caja: { t: 'Caja de control · 306 × 176 × 121 mm, ABS', d: 'En el fondo van la batería AGM y el controlador. Sobre separadores, una placa de acrílico con la Raspberry Pi Zero 2 W, el STM32, el INA226, los 2 LM2596, los 3 relés, la bornera y el fusible. En el frente están el LCD, los 3 interruptores y 2 USB-A, y atrás 3 prensaestopas PG7. Usa «Tapa» para ver adentro.',
+    v: () => [['Temperatura batería', fmt(S.temp, 1) + ' °C']] },
+  bateria: { t: 'Batería AGM 12 V 7 Ah', d: 'Plomo-ácido sellada, sin derrames. Son 84 Wh nominales, pero conviene no bajar del ~25 % (11,8 V) para no acortar su vida: eso hace el corte por bajo voltaje del relé 3.',
+    v: () => [['Estado de carga', Math.round(S.soc * 100) + ' %'], ['Voltaje', fmt(S.V, 2) + ' V'], ['Corriente', (S.Ib >= 0 ? '+' : '') + fmt(S.Ib, 2) + ' A ' + (S.Ib >= 0 ? '(carga)' : '(descarga)')], ['Energía sobre 25 %', fmt(Math.max(0, S.soc - 0.25) * 84, 0) + ' Wh']] },
+  ds18b20: { t: 'DS18B20 (1-Wire)', d: 'Va pegado a la batería. El STM32 lo usa para vigilar el calentamiento durante la carga.', v: () => [['Temperatura', fmt(S.temp, 1) + ' °C']] },
+  controlador: { t: 'Controlador de carga PWM 12 V (kit del curso)', d: 'Conecta el panel a la batería por PWM. Al acercarse a la carga completa reduce la corriente (absorción). Si la batería está llena, el excedente del panel se pierde: es el momento ideal para encender la Raspberry Pi.',
+    v: () => [['Corriente del panel', fmt(S.Ipv, 2) + ' A'], ['Corriente entregada', fmt(S.Iacc, 2) + ' A'], ['Estado', S.Ipv < 0.01 ? 'noche' : S.soc > 0.92 ? 'absorción' : 'carga']] },
+  fusible: { t: 'Portafusible 10 A', d: 'Protege el bus de 12 V contra cortocircuitos entre la batería y la bornera.', v: () => [['Corriente del bus', fmt(S.Pload / S.V, 2) + ' A']] },
+  bornera: { t: 'Bornera del bus 12 V / GND', d: 'Distribuye el bus de 12 V a los relés, los LM2596 y el cargador USB.', v: () => [['Potencia distribuida', W(S.Pload)]] },
+  rpi: { t: 'Raspberry Pi Zero 2 W', d: 'Reemplaza a la LicheeRV Nano, que nunca llegó. Corre el agente de IA local y el dashboard por WiFi, y habla con el STM32 por UART. Gasta más que el STM32, así que el STM32 solo la enciende cuando hay excedente solar o batería alta.',
+    v: () => [['Estado', !S.rpi ? 'apagada' : S.rpiBusy ? 'trabajando (agente)' : 'en reposo'], ['Potencia', W(S.pRpi || 0)], ['Excedente solar', W(S.surplus)]] },
+  stm32: { t: 'STM32F103 · Blue Pill', d: 'El tiempo real: lee las 4 LDR por ADC, genera el PWM de los 2 servos, maneja los 3 relés, los interruptores y el LCD, decide el corte por bajo voltaje y enciende o apaga la Raspberry Pi.',
+    v: () => [['Seguidor', S.mode], ['Correcciones', String(S.corrections)], ['Raspberry Pi', S.rpi ? 'encendida' : 'apagada']] },
+  ina226: { t: 'INA226 (I²C)', d: 'Mide el voltaje y la corriente del bus de 12 V. Con esos datos se estima el estado de carga y se calcula el voltaje en reposo (V − I·R) para reconectar tras un corte.',
+    v: () => [['Voltaje', fmt(S.V, 2) + ' V'], ['Corriente neta batería', fmt(S.Ib, 2) + ' A'], ['Consumo', W(S.Pload)]] },
+  lm5: { t: 'LM2596 → 5 V (lógica)', d: 'Alimenta la Raspberry Pi, el STM32, el LCD y las bobinas de los relés. Eficiencia supuesta del 85 %.', v: () => [['Potencia desde 12 V', W(S.p5 || 0)]] },
+  lm6: { t: 'LM2596 → 6 V (servos)', d: 'Rail separado para los MG996R, así sus picos de corriente no meten ruido en la lógica.', v: () => [['Potencia desde 12 V', W(S.p6 || 0)]] },
+  rele1: { t: 'Relé 1 · lámpara', d: 'Conmuta la lámpara LED de 12 V. Se controla con el interruptor LUZ y el STM32.', v: () => [['Bobina', onOff(S.lamp && !S.lvd)], ['Lámpara', onOff(S.lamp && !S.lvd)]] },
+  rele2: { t: 'Relé 2 · USB', d: 'Conmuta el cargador USB QC 3.0. El agente puede cortar la carga de celulares si la batería está baja.', v: () => [['Bobina', onOff(S.usb && !S.lvd)], ['Potencia USB', W(S.pUsb || 0)]] },
+  rele3: { t: 'Relé 3 · corte por bajo voltaje', d: 'Abre si la batería baja de 11,8 V durante 10 s y deja sin carga a la AGM. Cierra cuando el voltaje en reposo estimado vuelve a 12,4 V.', v: () => [['Estado', S.lvd ? 'ABIERTO (corte)' : 'cerrado'], ['Cortes en la situación', String(S.lvdEvents)]] },
+  lcd: { t: 'LCD 16×2 I²C', d: 'Muestra voltaje, estado de carga y corriente de la batería, potencia del panel, estado de la Raspberry Pi y la hora.', v: () => lcdLines().map((l, i) => ['Línea ' + (i + 1), l]) },
+  swLuz: { t: 'Interruptor LUZ', d: 'Enciende y apaga la lámpara a través del relé 1. Haz clic para conmutarlo.', v: () => [['Estado', onOff(S.lamp)]] },
+  swUsb: { t: 'Interruptor USB', d: 'Habilita el cargador USB a través del relé 2. Haz clic para conmutarlo.', v: () => [['Estado', onOff(S.usb)]] },
+  swGen: { t: 'Interruptor general', d: 'Corta la alimentación de toda la caja (en esta simulación siempre está encendido).', v: () => [['Estado', 'encendido']] },
+  usb: { t: 'Cargador USB QC 3.0 doble', d: '2 puertos USB-A en el frente. Se supone carga rápida de 10 W por celular, que se reduce por encima del 80 %, con un convertidor al 88 %.', v: () => [['Potencia desde 12 V', W(S.pUsb || 0)], ['Celulares', String(S.phones.length)]] },
+  cel: { t: 'Celulares cargando', d: 'Batería de ~15 Wh cada uno (≈ 4000 mAh).', v: () => S.phones.length ? S.phones.map((p, i) => ['Celular ' + (i + 1), Math.round(p.soc * 100) + ' % · ' + W(p.p)]) : [['Estado', 'sin celulares conectados']] },
+  lampara: { t: 'Lámpara LED 12 V · 5 W', d: 'Luz de emergencia a 12 V DC, sin inversor. Va conectada al relé 1.', v: () => [['Estado', onOff(S.lamp && !S.lvd)], ['Potencia', W(S.lamp && !S.lvd ? P.lamp : 0)]] },
+};
+let infoKey = null;
+const highlight = new THREE.BoxHelper(undefined, 0xf5b84a); highlight.visible = false; scene.add(highlight);
+function showInfo(key) {
+  const inf = INFO[key]; if (!inf) return;
+  infoKey = key;
+  $('#info-title').textContent = inf.t; $('#info-desc').textContent = inf.d;
+  $('#info').hidden = false; renderInfoLive();
+  highlight.setFromObject(PICK[key][0]); highlight.visible = true; highlight.userData.obj = PICK[key][0];
+}
+function hideInfo() { infoKey = null; $('#info').hidden = true; highlight.visible = false; }
+function renderInfoLive() {
+  if (!infoKey || !S.sun) return;
+  $('#info-live').innerHTML = INFO[infoKey].v().map(([k, v]) => '<dt>' + k + '</dt><dd>' + v + '</dd>').join('');
+}
+$('#info-close').onclick = hideInfo;
+
+/* ── selección con el puntero ── */
+const ray = new THREE.Raycaster(); const ndc = new THREE.Vector2();
+let downAt = null;
+function shownChain(o) { for (; o; o = o.parent) if (!o.visible) return false; return true; }
+function pickAt(ev) {
+  const r = canvas.getBoundingClientRect();
+  ndc.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  const hits = ray.intersectObjects(scene.children, true);
+  for (const h of hits) {
+    if (!shownChain(h.object)) continue;
+    let o = h.object; while (o && !o.userData.pick) o = o.parent;
+    if (o && o.userData.pick) {
+      const k = o.userData.pick;
+      if (k === 'caja' && S.lid === 'transparente') continue;
+      return k;
+    }
+  }
+  return null;
+}
+canvas.addEventListener('pointerdown', (e) => { downAt = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+canvas.addEventListener('pointerup', (e) => {
+  if (!downAt) return;
+  const moved = Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y); downAt = null;
+  if (moved > 6) return;
+  const k = pickAt(e);
+  if (!k) { hideInfo(); return; }
+  if (k === 'swLuz') { S.lamp = !S.lamp; syncControls(); }
+  if (k === 'swUsb') { S.usb = !S.usb; syncControls(); }
+  showInfo(k);
+});
+let hoverT = 0;
+canvas.addEventListener('pointermove', (e) => {
+  if (e.buttons || performance.now() - hoverT < 60) return; hoverT = performance.now();
+  canvas.style.cursor = pickAt(e) ? 'pointer' : 'grab';
+});
+
+/* ───────── cámara y tapa ───────── */
+const CAMS = {
+  general: { p: [2.25, 1.55, 2.5], t: [0.05, 0.3, 0.05] },
+  seguidor: { p: [mm(TRK.x) + 1.25, 1.05, mm(TRK.z) + 1.45], t: [mm(TRK.x) + 0.15, 0.45, mm(TRK.z)] },
+  caja: { p: [mm(BOX.x) + 0.2, 0.62, mm(BOX.z) + 0.4], t: [mm(BOX.x), 0.05, mm(BOX.z) + 0.01] },
+};
+let camAnim = null;
+function setCam(name) {
+  const c = CAMS[name]; if (!c) return; S.cam = name;
+  camAnim = { t0: performance.now(), p0: camera.position.clone(), q0: controls.target.clone(), p1: new THREE.Vector3(...c.p), q1: new THREE.Vector3(...c.t) };
+  syncSeg('#cam-seg', 'cam', name);
+}
+function setLid(mode) {
+  S.lid = mode;
+  const tr = mode === 'transparente';
+  M.abs.opacity = tr ? 0.16 : 1; M.abs.depthWrite = !tr;
+  M.absLid.opacity = tr ? 0.12 : 1; M.absLid.depthWrite = !tr;
+  lid.visible = mode !== 'abierta';
+  shell.traverse((m) => { if (m.isMesh) m.castShadow = !tr; });
+  lid.traverse((m) => { if (m.isMesh) m.castShadow = !tr; });
+  syncSeg('#lid-seg', 'lid', mode);
+}
+
+/* ───────── interfaz ───────── */
+function syncSeg(sel, attr, val) { document.querySelectorAll(sel + ' button').forEach((b) => b.classList.toggle('active', b.dataset[attr] === String(val))); }
+function syncControls() {
+  syncSeg('#speed-seg', 'speed', S.speed);
+  $('#cover').value = S.cover; $('#cover-val').textContent = Math.round(S.cover * 100) + ' %';
+  $('#t-lamp').setAttribute('aria-pressed', S.lamp); $('#t-usb').setAttribute('aria-pressed', S.usb);
+  $('#t-track').setAttribute('aria-pressed', S.track); $('#t-ref').setAttribute('aria-pressed', S.ref);
+  $('#phones').value = String(S.phones.length);
+  $('#play').textContent = S.run ? '❚❚' : '▶'; $('#play').setAttribute('aria-label', S.run ? 'Pausar simulación' : 'Continuar simulación');
+}
+const missions = $('#missions');
+ESC.forEach((e, i) => {
+  const b = document.createElement('button'); b.className = 'mission'; b.dataset.id = e.id;
+  b.innerHTML = '<span class="mission-number">' + (i + 1) + '</span><div><strong></strong><span></span></div>';
+  b.querySelector('strong').textContent = e.n; b.querySelector('div span').textContent = e.short;
+  b.onclick = () => { loadScenario(e.id); if (matchMedia('(max-width: 1100px)').matches) selectTab('p-med'); };
+  missions.appendChild(b);
+});
+function renderLog() {
+  $('#log').innerHTML = S.log.map((l) => '<li><b>' + hhmm(l.t) + '</b>' + l.msg + '</li>').join('');
+}
+document.querySelectorAll('#speed-seg button').forEach((b) => b.onclick = () => { S.speed = +b.dataset.speed; syncControls(); });
+document.querySelectorAll('#lid-seg button').forEach((b) => b.onclick = () => setLid(b.dataset.lid));
+document.querySelectorAll('#cam-seg button').forEach((b) => b.onclick = () => setCam(b.dataset.cam));
+let draggingHour = false;
+$('#hour').addEventListener('input', (e) => { draggingHour = true; const v = +e.target.value; S.t = Math.floor(S.t / 24) * 24 + v; step(0); });
+$('#hour').addEventListener('change', () => { draggingHour = false; });
+$('#cover').addEventListener('input', (e) => { S.cover = +e.target.value; step(0); syncControls(); });
+$('#soc').addEventListener('input', (e) => { S.soc = +e.target.value; S.V = ocv(S.soc); step(0); });
+$('#t-lamp').onclick = () => { S.lamp = !S.lamp; syncControls(); };
+$('#t-usb').onclick = () => { S.usb = !S.usb; syncControls(); };
+$('#t-track').onclick = () => { S.track = !S.track; if (S.track) S.mode = 'seguimiento'; syncControls(); };
+$('#t-ref').onclick = () => { S.ref = !S.ref; refG.visible = S.ref; syncControls(); };
+$('#phones').onchange = (e) => { const n = +e.target.value; while (S.phones.length < n) S.phones.push({ soc: 0.2, p: 0 }); S.phones.length = n; syncControls(); };
+$('#play').onclick = togglePlay;
+function togglePlay() {
+  if (!S.run && S.done && S.scen) { loadScenario(S.scen.id, { keepCam: true }); return; }
+  S.run = !S.run; syncControls();
+}
+function selectTab(id) {
+  document.querySelectorAll('.tabs button').forEach((b) => b.setAttribute('aria-selected', b.dataset.tab === id));
+  document.querySelectorAll('.panel').forEach((p) => p.classList.toggle('shown', p.id === id));
+}
+document.querySelectorAll('.tabs button').forEach((b) => b.onclick = () => selectTab(b.dataset.tab));
+
+// modales
+function openModal(id) { $('#' + id).hidden = false; }
+document.querySelectorAll('.modal-backdrop').forEach((m) => {
+  m.addEventListener('click', (e) => { if (e.target === m || e.target.closest('[data-close]')) m.hidden = true; });
+});
+$('#help-btn').onclick = () => openModal('help');
+$('#share-btn').onclick = openShare;
+function shareUrl() { const u = new URL(location.href); u.search = ''; u.hash = ''; if (S.scen) u.searchParams.set('escenario', S.scen.id); return u.toString(); }
+let qrLib = null;
+function loadQr() {
+  if (qrLib) return qrLib;
+  qrLib = new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js'; s.onload = () => res(window.qrcode); s.onerror = rej; document.head.appendChild(s); });
+  return qrLib;
+}
+async function openShare() {
+  const url = shareUrl();
+  $('#share-url').value = url;
+  $('#share-desc').textContent = S.scen ? 'Abre la situación «' + S.scen.n + '».' : 'Abre la simulación.';
+  openModal('share');
+  const box = $('#qr'); box.textContent = 'Generando QR…';
+  try { const qrcode = await loadQr(); const q = qrcode(0, 'M'); q.addData(url); q.make(); box.innerHTML = q.createSvgTag({ cellSize: 4, margin: 2, scalable: true }); }
+  catch (e) { box.textContent = 'No se pudo generar el QR. Usa el enlace.'; }
+}
+$('#copy-btn').onclick = async () => { try { await navigator.clipboard.writeText($('#share-url').value); $('#copy-btn').textContent = 'Copiado'; setTimeout(() => $('#copy-btn').textContent = 'Copiar', 1500); } catch (e) { $('#share-url').select(); } };
+window.addEventListener('keydown', (e) => {
+  if (e.target.closest?.('input, select, textarea')) return;
+  if (e.key >= '1' && e.key <= String(ESC.length)) loadScenario(ESC[+e.key - 1].id);
+  else if (e.key === ' ') { e.preventDefault(); togglePlay(); }
+  else if (e.key === 't' || e.key === 'T') { const o = ['cerrada', 'transparente', 'abierta']; setLid(o[(o.indexOf(S.lid) + 1) % 3]); }
+  else if (e.key === 'Escape') { hideInfo(); document.querySelectorAll('.modal-backdrop').forEach((m) => m.hidden = true); }
+});
+
+/* ───────── LCD, celulares, métricas, gráfico ───────── */
+function lcdLines() {
+  const I = S.Ib;
+  const l1 = (fmtDot(S.V, 1) + 'V ' + String(Math.round(S.soc * 100)).padStart(3) + '% ' + (I >= 0 ? '+' : '-') + fmtDot(Math.abs(I), 1) + 'A').padEnd(16).slice(0, 16);
+  const l2 = S.lvd ? 'CORTE BAJO VOLT ' : ('PV' + String(Math.round(S.Pavail)).padStart(3) + 'W ' + (S.rpi ? 'RPi' : '   ') + ' ' + hhmm(S.t)).padEnd(16).slice(0, 16);
+  return [l1, l2];
+}
+const fmtDot = (x, d) => x.toFixed(d);
+function drawLcd() {
+  const { g, c, t } = lcdTex;
+  g.fillStyle = S.lvd ? '#1b3a8a' : '#2a56d6'; g.fillRect(0, 0, c.width, c.height);
+  g.fillStyle = '#e9f0ff'; g.font = '600 24px ui-monospace, Consolas, monospace'; g.textBaseline = 'top';
+  const [a, b] = lcdLines();
+  for (let i = 0; i < 16; i++) { g.fillText(a[i], 6 + i * 15.4, 5); g.fillText(b[i], 6 + i * 15.4, 35); }
+  t.needsUpdate = true;
+}
+function drawPhones() {
+  phones.forEach((ph, i) => {
+    const st = S.phones[i]; ph.g.visible = !!st; ph.cable.visible = !!st;
+    if (!st) return;
+    const { g, c, t } = ph.tex;
+    const charging = st.p > 0.01;
+    g.fillStyle = charging ? '#0b1a14' : '#050607'; g.fillRect(0, 0, c.width, c.height);
+    g.strokeStyle = '#9fb'; g.lineWidth = 3; g.strokeRect(18, 30, 28, 56); g.fillStyle = '#9fb'; g.fillRect(26, 25, 12, 5);
+    g.fillStyle = st.soc < 0.2 ? '#ff7a6b' : '#7ee08a'; const hh = 52 * st.soc; g.fillRect(20, 84 - hh, 24, hh);
+    g.fillStyle = '#e8f1ee'; g.font = '700 15px system-ui'; g.textAlign = 'center'; g.fillText(Math.round(st.soc * 100) + '%', 32, 108);
+    if (charging) { g.fillStyle = '#f5b84a'; g.font = '700 18px system-ui'; g.fillText('⚡', 32, 20); }
+    t.needsUpdate = true;
+  });
+}
+function renderMetrics() {
+  $('#m-soc').textContent = Math.round(S.soc * 100) + ' %';
+  $('#m-v').textContent = fmt(S.V, 2) + ' V';
+  const bar = $('#m-soc-bar'); bar.style.width = (S.soc * 100).toFixed(1) + '%'; bar.style.background = S.soc < 0.3 ? 'var(--red)' : S.soc < 0.5 ? 'var(--accent)' : 'var(--green)';
+  $('#m-pv').textContent = W(S.Pavail); $('#m-pf').textContent = W(S.PfixAvail);
+  $('#m-load').textContent = W(S.Pload);
+  $('#m-ib').innerHTML = (S.Ib >= 0 ? '+' : '') + fmt(S.Ib, 2) + ' A';
+  $('#m-ang').textContent = fmt(compassAz(S.psi), 0) + '° / ' + fmt(S.beta / D2R, 0) + '°';
+  $('#m-sun').textContent = fmt(S.sun.az, 0) + '° / ' + fmt(S.sun.el, 0) + '°';
+  $('#m-err').innerHTML = fmt(Math.max(Math.abs(S.eTf), Math.abs(S.eHf)), 2) + ' <small>/ ' + fmt(P.deadOn, 2) + '</small>';
+  $('#m-corr').textContent = S.corrections;
+  const gain = S.E.fix > 0.5 ? ' <small>(' + (S.E.cap >= S.E.fix ? '+' : '') + fmt((S.E.cap / S.E.fix - 1) * 100, 0) + ' % vs. fijo)</small>' : '';
+  $('#m-energy').innerHTML = fmt(S.E.cap, 0) + ' Wh captados' + gain + '<br><small>Consumo ' + fmt(S.E.load, 0) + ' Wh · fijo ' + fmt(S.E.fix, 0) + ' Wh</small>';
+  const pills = [
+    ['Relé 1 · lámpara', S.lamp && !S.lvd ? 'on' : ''],
+    ['Relé 2 · USB', S.usb && !S.lvd ? 'on' : ''],
+    [S.lvd ? 'Relé 3 · CORTE' : 'Relé 3 · bus OK', S.lvd ? 'warn' : 'on'],
+    ['RPi ' + (!S.rpi ? 'apagada' : S.rpiBusy ? 'trabajando' : 'en reposo'), !S.rpi ? '' : S.rpiBusy ? 'busy' : 'on'],
+    ['Seguidor: ' + S.mode, S.mode === 'seguimiento' || S.mode === 'retorno al este' ? 'busy' : ''],
+  ];
+  $('#pills').innerHTML = pills.map(([t, c]) => '<span class="pill ' + c + '">' + t + '</span>').join('');
+  if (S.scen) $('#esc-progress').style.width = (clamp((S.t - S.scen.t0) / S.scen.dur, 0, 1) * 100).toFixed(1) + '%';
+  $('#clock-time').textContent = hhmm(S.t) + (Math.floor(S.t / 24) > 0 ? ' +' + Math.floor(S.t / 24) + 'd' : '');
+  if (!draggingHour) { $('#hour').value = (S.t % 24).toFixed(2); }
+  $('#hour-val').textContent = hhmm(S.t);
+  $('#soc').value = S.soc; $('#soc-val').textContent = Math.round(S.soc * 100) + ' %';
+}
+const chart = $('#chart');
+function drawChart() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const w = chart.clientWidth, h = chart.clientHeight; if (!w) return;
+  if (chart.width !== Math.round(w * dpr)) { chart.width = Math.round(w * dpr); chart.height = Math.round(h * dpr); }
+  const g = chart.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
+  const L = 30, R = 30, T = 8, B = 18, pw = w - L - R, ph = h - T - B;
+  const t0 = S.scen ? S.scen.t0 : (S.hist[0]?.t ?? S.t), t1 = S.scen ? S.scen.t0 + S.scen.dur : Math.max(S.t, t0 + 1);
+  const pmax = 25;
+  g.strokeStyle = 'rgba(255,255,255,.08)'; g.lineWidth = 1; g.fillStyle = '#7f938d'; g.font = '10px system-ui';
+  for (let i = 0; i <= 5; i++) { const y = T + ph - ph * i / 5; g.beginPath(); g.moveTo(L, y); g.lineTo(L + pw, y); g.stroke(); g.textAlign = 'right'; g.fillText(String(i * 5), L - 4, y + 3); g.textAlign = 'left'; g.fillText(i * 20 + '%', L + pw + 4, y + 3); }
+  g.textAlign = 'center';
+  const ticks = 4; for (let i = 0; i <= ticks; i++) { const tt = t0 + (t1 - t0) * i / ticks; g.fillText(hhmm(tt), L + pw * i / ticks, h - 4); }
+  g.save(); g.translate(9, T + ph / 2); g.rotate(-Math.PI / 2); g.fillText('W', 0, 0); g.restore();
+  const X = (t) => L + pw * (t - t0) / (t1 - t0);
+  const line = (key, color, scale, dash) => {
+    g.strokeStyle = color; g.lineWidth = 1.8; g.setLineDash(dash || []); g.beginPath();
+    S.hist.forEach((p, i) => { const x = X(p.t), y = T + ph - ph * clamp(p[key] / scale, 0, 1); i ? g.lineTo(x, y) : g.moveTo(x, y); });
+    g.stroke(); g.setLineDash([]);
+  };
+  line('pf', '#8d9a96', pmax, [4, 3]); line('pl', '#6aa8ff', pmax); line('pa', '#f5b84a', pmax); line('soc', '#7ee08a', 1);
+  if (S.t >= t0 && S.t <= t1) { g.strokeStyle = 'rgba(255,255,255,.35)'; g.beginPath(); g.moveTo(X(S.t), T); g.lineTo(X(S.t), T + ph); g.stroke(); }
+}
+
+/* ───────── apariencia por cuadro ───────── */
+const WHITE = new THREE.Color(0xffffff), MOON = new THREE.Color(0x8fa6d6), cDay = new THREE.Color(0x8cc2ea), cDusk = new THREE.Color(0xe7a77a), cNight = new THREE.Color(0x0a1224), cOver = new THREE.Color(0x9aa5ad), sky = new THREE.Color();
+let lastUi = 0, lastLcd = 0, lastChart = 0;
+function updateVisuals(dtR, now) {
+  yaw.rotation.y = S.psi; tilt.rotation.x = S.beta;
+  const sun = S.sun, el = sun.el;
+  const day = smooth(-6, 10, el), dusk = smooth(-8, 2, el) * (1 - smooth(4, 22, el));
+  sky.copy(cNight).lerp(cDay, day).lerp(cDusk, dusk * 0.65).lerp(cOver, S.cover * 0.55 * day);
+  scene.background = sky; scene.fog.color.copy(sky);
+  hemi.intensity = 0.6 + 0.35 * day; hemi.color.copy(sky).lerp(day > 0.3 ? WHITE : MOON, day > 0.3 ? 0.4 : 0.6);
+  hemi.groundColor.setHex(day > 0.3 ? 0x3a4430 : 0x1c2430);
+  const dniRatio = S.irr.dni / 950;
+  sunLight.intensity = 3.2 * clamp(dniRatio, 0, 1) + (el > 0 ? 0.15 : 0);
+  sunLight.position.copy(sun.dir).multiplyScalar(6).add(sunLight.target.position);
+  sunLight.castShadow = el > 1;
+  sunMesh.position.copy(sun.dir).multiplyScalar(60); sunMesh.visible = el > -2;
+  sunMesh.material.color.setHex(el < 8 ? 0xffb070 : 0xfff1b0);
+  stars.material.opacity = 1 - smooth(-10, 2, el);
+  const night = 1 - day;
+  cloudMat.opacity = 0.85 * smooth(0.05, 0.6, S.cover); cloudMat.color.setRGB(lerp(0.95, 0.25, night), lerp(0.96, 0.28, night), lerp(0.97, 0.34, night));
+  clouds.forEach((c, i) => { c.position.x += dtR * (0.25 + 0.05 * i) * Math.min(4, 1 + Math.log10(S.speed)); if (c.position.x > 45) c.position.x = -45; });
+  sunCloudMat.opacity = 0.95 * S.cloudNow * (el > 0 ? 1 : 0); sunCloudMat.color.copy(cloudMat.color);
+  sunCloud.position.copy(sun.dir).multiplyScalar(40); sunCloud.lookAt(camera.position); sunCloud.visible = S.cloudNow > 0.02 && el > 0;
+  // lámpara
+  const lampOn = S.lamp && !S.lvd;
+  lampMat.emissiveIntensity = lampOn ? 2.2 : 0; lampLight.intensity = lampOn ? lerp(0.6, 3.5, night) : 0;
+  // LEDs
+  relayLeds[0].emissiveIntensity = lampOn ? 2 : 0; relayLeds[1].emissiveIntensity = S.usb && !S.lvd ? 2 : 0; relayLeds[2].emissiveIntensity = !S.lvd ? 2 : 0;
+  rpiLedMat.emissiveIntensity = S.rpi ? (S.rpiBusy ? ((now / 120 | 0) % 2 ? 2.5 : 0.2) : 1.6) : 0;
+  stmLed.material.emissiveIntensity = 1.5;
+  ctrlLeds[0].emissiveIntensity = S.Iacc > 0.02 ? 2 : 0; ctrlLeds[1].emissiveIntensity = S.soc > 0.92 ? 2 : 0.15; ctrlLeds[2].emissiveIntensity = S.lvd ? ((now / 400 | 0) % 2 ? 2 : 0) : 0;
+  // interruptores
+  const sw = [S.lamp, S.usb, true];
+  switches.forEach((s, i) => { s.lever.rotation.x = sw[i] ? -0.5 : 0.5; s.ring.material.emissiveIntensity = sw[i] ? 1.6 : 0; });
+  refG.visible = S.ref;
+  if (highlight.visible) highlight.setFromObject(highlight.userData.obj);
+  if (now - lastLcd > 250) { lastLcd = now; drawLcd(); drawPhones(); }
+  if (now - lastUi > 150) { lastUi = now; renderMetrics(); renderInfoLive(); }
+  if (now - lastChart > 300) { lastChart = now; drawChart(); }
+}
+
+/* ───────── bucle ───────── */
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (canvas.width !== Math.round(w * renderer.getPixelRatio()) || canvas.height !== Math.round(h * renderer.getPixelRatio())) {
+    renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+  }
+}
+let last = performance.now();
+function frame(now) {
+  const dtR = Math.min(0.1, (now - last) / 1000); last = now;
+  if (S.run) {
+    let dts = dtR * S.speed, finish = false;
+    if (S.scen) { const rem = (S.scen.t0 + S.scen.dur - S.t) * 3600; if (dts >= rem) { dts = Math.max(0, rem); finish = true; } }
+    while (dts > 1e-6) { const d = Math.min(dts, 5); step(d / 3600); dts -= d; }
+    if (finish) finishScenario();
+  }
+  if (camAnim) {
+    const k = smooth(0, 1, (now - camAnim.t0) / 900);
+    camera.position.lerpVectors(camAnim.p0, camAnim.p1, k); controls.target.lerpVectors(camAnim.q0, camAnim.q1, k);
+    if (k >= 1) camAnim = null;
+  }
+  resize();
+  updateVisuals(dtR, now);
+  controls.update();
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+
+/* ───────── arranque ───────── */
+const params = new URLSearchParams(location.search);
+const startId = ESC.some((e) => e.id === params.get('escenario')) ? params.get('escenario') : 'soleado';
+loadScenario(startId);
+camera.position.set(...CAMS[S.cam].p); controls.target.set(...CAMS[S.cam].t); camAnim = null;
+syncControls();
+$('#loading').hidden = true;
+try { if (!localStorage.getItem('solar3d-intro')) { openModal('help'); localStorage.setItem('solar3d-intro', '1'); } } catch (e) { openModal('help'); }
+window.solar = { S, P, ESC, step, loadScenario, finishScenario, setLid, setCam }; // para depurar desde la consola
+requestAnimationFrame((t) => { last = t; frame(t); });
+</script>
+</body>
+</html>
