@@ -1,6 +1,8 @@
 # Simulación 3D: estación solar portátil para emergencias
 
-Gemelo 3D del proyecto Solar (DSE 2026-2), hecho en la línea de [NexoRobot](https://github.com/Ojperdomoc/NexoRobot): una sola página (`index.html`) con three.js, sin compilar y sin servidor. La geometría sigue el diseño de [`proyecto/mecanico/`](../proyecto/mecanico/):
+**Verla:** <https://allocco14.github.io/estacion-solar-3d/>
+
+Gemelo 3D del proyecto Solar (DSE 2026-2), hecho en la línea de [NexoRobot](https://github.com/Ojperdomoc/NexoRobot): una sola página (`index.html`) con three.js, sin compilar y sin servidor. La geometría sigue el diseño mecánico del proyecto (Fusion v4):
 
 - **Seguidor de 2 ejes:** cruz de perfil 2020, mástil de 40 × 40, rodamiento tipo *lazy susan*, horquilla, panel de 440 × 350 mm y 4 LDR con divisor en X en el borde norte.
 - **Caja de control** de 306 × 176 × 121 mm. Lleva la AGM 12 V 7 Ah, el controlador PWM, el fusible y una placa de acrílico con la **Raspberry Pi Zero 2 W**, que reemplaza a la LicheeRV Nano porque nunca llegó. Sobre la misma placa van el STM32 Blue Pill, el INA226, los 2 LM2596 y los 3 relés. En el frente hay un LCD 16×2, 3 interruptores y 2 USB-A.
@@ -50,4 +52,15 @@ Después se abre <http://localhost:8080/>. Desde la consola del navegador, `sola
 
 ## Publicación
 
-[`.github/workflows/pages-simulacion.yml`](../.github/workflows/pages-simulacion.yml) publica esta carpeta en GitHub Pages en cada push a `master` que toque `simulacion/`. Para eso Pages tiene que estar habilitado con la fuente **GitHub Actions** (Settings → Pages). Si el repositorio es privado, Pages requiere un plan de pago.
+La fuente está en `simulacion/` del repositorio del curso, que es privado. El sitio
+sale del repositorio público
+[Allocco14/estacion-solar-3d](https://github.com/Allocco14/estacion-solar-3d), que
+tiene esta carpeta como raíz. Para actualizarlo, desde la raíz del repo del curso
+y después de hacer commit:
+
+```sh
+git subtree push --prefix simulacion https://github.com/Allocco14/estacion-solar-3d.git main
+```
+
+Cada push a `main` del repo público lo publica en GitHub Pages
+([`.github/workflows/pages.yml`](.github/workflows/pages.yml)).
