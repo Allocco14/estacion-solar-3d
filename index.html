@@ -59,6 +59,8 @@ button { cursor: pointer; }
 .icon-btn { height: 36px; min-width: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line-strong);
   background: var(--panel); backdrop-filter: blur(10px); display: inline-flex; align-items: center; gap: 6px; }
 .icon-btn:hover { border-color: var(--accent); }
+.icon-btn.xr { background: var(--accent); color: var(--accent-ink); border-color: transparent; font-weight: 700; }
+.icon-btn.xr[hidden] { display: none; }
 .play { width: 32px; height: 32px; border-radius: 50%; border: 0; background: var(--accent); color: var(--accent-ink);
   display: grid; place-items: center; font-weight: 800; }
 
@@ -92,6 +94,16 @@ button { cursor: pointer; }
 .progress > i { display: block; height: 100%; width: 0; background: var(--accent); }
 .summary { margin-top: 8px; padding: 10px; border-radius: 10px; background: rgba(95,211,181,.10); border: 1px solid rgba(95,211,181,.35); }
 .summary[hidden] { display: none; }
+.game { margin-top: 10px; padding: 10px; border-radius: 10px; background: rgba(245,184,74,.08); border: 1px solid rgba(245,184,74,.35); }
+.game[hidden], .game-req[hidden] { display: none; }
+.game-score { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.game-score span { font-size: 12px; color: var(--muted); }
+.game-score strong { font-size: 26px; color: var(--accent); font-variant-numeric: tabular-nums; }
+.game-hint { margin: 4px 0 0; font-size: 12.5px; }
+.game-req { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 8px; font-size: 12.5px; }
+.game-req span { flex: 1 1 100%; }
+.game-req button { border: 1px solid var(--line-strong); background: transparent; border-radius: 9px; padding: 5px 10px; font-size: 12.5px; }
+.game-req button.ok { background: var(--teal); color: #052019; border-color: transparent; font-weight: 650; }
 .log { list-style: none; margin: 8px 0 0; padding: 0; font-size: 12px; color: var(--muted); }
 .log li { padding: 3px 0; border-top: 1px dashed var(--line); }
 .log b { color: var(--text); font-variant-numeric: tabular-nums; font-weight: 600; margin-right: 6px; }
@@ -210,6 +222,7 @@ kbd { font: 12px ui-monospace, monospace; background: rgba(255,255,255,.08); bor
     <button class="play" id="play" aria-label="Pausar simulación" title="Pausar / continuar (espacio)">❚❚</button>
   </div>
   <div class="header-actions">
+    <button class="icon-btn xr" id="xr-btn" hidden aria-label="Entrar en realidad mixta">◎<span class="label" id="xr-label">Entrar en MR</span></button>
     <button class="icon-btn" id="help-btn" aria-label="Cómo usar la simulación">?<span class="label">Ayuda</span></button>
     <button class="icon-btn" id="share-btn" aria-label="Compartir">⇪<span class="label">Compartir</span></button>
   </div>
@@ -230,6 +243,14 @@ kbd { font: 12px ui-monospace, monospace; background: rgba(255,255,255,.08); bor
       <h3 id="esc-title">Explora la estación</h3>
       <p id="esc-obs">Elige una situación o mueve los controles. Haz clic sobre cualquier pieza para ver qué hace y su valor en vivo.</p>
       <div class="progress" aria-hidden="true"><i id="esc-progress"></i></div>
+      <div class="game" id="game" hidden>
+        <div class="game-score"><span>Puntaje</span><strong id="g-score">0</strong></div>
+        <p class="game-hint" id="g-hint"></p>
+        <div class="game-req" id="g-req" hidden>
+          <span>Un vecino pide cargar su celular.</span>
+          <button class="ok" id="g-accept">Aceptar</button><button id="g-reject">Rechazar</button>
+        </div>
+      </div>
       <div class="summary" id="esc-summary" hidden></div>
       <ul class="log" id="log"></ul>
     </div>
@@ -295,6 +316,7 @@ kbd { font: 12px ui-monospace, monospace; background: rgba(255,255,255,.08); bor
       <label for="phones">Celulares</label>
       <select id="phones"><option value="0">0</option><option value="1">1</option><option value="2">2</option></select>
       <button class="toggle" id="t-track" aria-pressed="true">Seguimiento</button>
+      <button class="toggle" id="t-cloud" aria-pressed="false">Tapar el sol</button>
     </div>
     <div class="ctl-group">
       <span class="ctl-label">Tapa</span>
@@ -327,6 +349,22 @@ kbd { font: 12px ui-monospace, monospace; background: rgba(255,255,255,.08); bor
       <li><strong>Clic sobre una pieza</strong>: muestra qué hace y su valor en vivo. Clic en los interruptores del frente para encender la lámpara o el USB.</li>
       <li><strong>Tapa</strong>: hazla transparente o quítala para ver el interior (tecla <kbd>T</kbd>). <kbd>Espacio</kbd> pausa la simulación.</li>
       <li><strong>Compartir</strong> genera un enlace y un QR que abren la situación actual.</li>
+      <li><strong>Tapar el sol</strong> pone una nube entre el sol y el panel. Haz clic sobre ella para apartarla.</li>
+    </ul>
+    <h3>Juego: la estación del barrio (situación 7)</h3>
+    <p>Eres el agente de la estación durante 24 h de emergencia, que empieza a las 06:00 con la batería al 35 %. Los vecinos piden cargar el celular: aceptas o rechazas, con un máximo de 2 a la vez. De 18:00 a 22:00 el barrio necesita la lámpara. En el día pasan nubes que tapan el panel y hay que apartarlas.</p>
+    <ul>
+      <li><strong>+10</strong> por celular cargado al 80 %, <strong>+10</strong> por hora de lámpara entre 18:00 y 22:00 y <strong>+3</strong> por nube apartada.</li>
+      <li><strong>−30</strong> por cada corte por bajo voltaje. <strong>+20</strong> si amaneces con la batería al 40 % o más, lista para el otro día.</li>
+      <li>El agente (la Raspberry Pi) te dice si alcanza la energía para la noche antes de aceptar un celular.</li>
+    </ul>
+    <h3>Realidad mixta (Meta Quest)</h3>
+    <ul>
+      <li>Abre esta página en el navegador de la Quest y pulsa <strong>Entrar en MR</strong>. La estación aparece a escala real, 1,7 m delante de ti, sobre tu piso (passthrough). Si el navegador no tiene MR, entra en VR.</li>
+      <li>Para moverla, apunta al piso y aprieta el gatillo donde está el anillo, o usa el botón <strong>Mover</strong>.</li>
+      <li>Con el gatillo o pellizcando con la mano: toca una pieza para ver su ficha, conmuta LUZ y USB en el frente de la caja, acepta celulares y aparta nubes.</li>
+      <li><strong>Agarra el sol</strong> (la esfera amarilla) y arrástralo por el cielo: el seguidor lo persigue con sus 4 LDR. Ponle una nube delante y mira caer la corriente.</li>
+      <li>El tablero flotante muestra las medidas y tiene los botones Juego, Situación, Sol, Nube, Tapa, Mover y Salir.</li>
     </ul>
     <h3>Supuestos del modelo (aproximados)</h3>
     <table>
@@ -366,6 +404,7 @@ kbd { font: 12px ui-monospace, monospace; background: rgba(255,255,255,.08); bor
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { XRControllerModelFactory } from 'three/addons/webxr/XRControllerModelFactory.js';
 
 /* ───────── utilidades ───────── */
 const $ = (s) => document.querySelector(s);
@@ -400,7 +439,20 @@ const S = {
   G: 0, Gfix: 0, cloudNow: 0, sun: null, irr: { dni: 0, dhi: 0 },
   E: { cap: 0, fix: 0, load: 0 }, socStart: 0.6, temp: 24,
   scen: null, done: false, hist: [], lastSample: -1e9, log: [], lid: 'cerrada', cam: 'general', ref: true,
+  sunDir: null, // sol manual (MR): dirección fijada por el usuario
 };
+
+/* ───────── juego: la estación del barrio ───────── */
+const GAME = {
+  reqAt: [7.5, 10, 12.5, 15.5, 18.5, 20, 21.5, 23.5, 26], reqLife: 1.5, // pedidos de carga (h desde las 00:00 del día 1)
+  cloudAt: [9.5, 12, 14.5], cloudLife: 2.5,
+  lampFrom: 18, lampTo: 22, phoneDone: 0.8, socBonus: 0.4,
+};
+const G = { on: false, req: null, reqIdx: 0, cloudIdx: 0, done: 0, accepted: 0, rejected: 0, missed: 0, clouds: 0, lampH: 0, bonus: 0, final: false, msg: '', msgUntil: 0 };
+function resetGame(on) {
+  Object.assign(G, { on, req: null, reqIdx: 0, cloudIdx: 0, done: 0, accepted: 0, rejected: 0, missed: 0, clouds: 0, lampH: 0, bonus: 0, final: false, msg: '', msgUntil: 0 });
+}
+const gameScore = () => 10 * G.done + Math.round(10 * G.lampH) + 3 * G.clouds - 30 * S.lvdEvents + G.bonus;
 
 /* ───────── sol e irradiancia ───────── */
 const tmpV = new THREE.Vector3();
@@ -412,6 +464,10 @@ function sunAt(h) {
   const U = Math.sin(dec) * Math.sin(lat) + Math.cos(dec) * Math.cos(lat) * Math.cos(H);
   let az = Math.atan2(E, N) / D2R; if (az < 0) az += 360;
   return { dir: new THREE.Vector3(E, U, -N).normalize(), el: Math.asin(clamp(U, -1, 1)) / D2R, az };
+}
+function sunFromDir(d) {
+  let az = Math.atan2(d.x, -d.z) / D2R; if (az < 0) az += 360;
+  return { dir: d.clone(), el: Math.asin(clamp(d.y, -1, 1)) / D2R, az };
 }
 function irradiance(sun, cloud) {
   if (sun.el <= 0) return { dni: 0, dhi: 0, dni0: 0 };
@@ -515,9 +571,10 @@ function trackerStep(dt, sun, irr) {
 /* ───────── paso de simulación ───────── */
 function step(dt) {
   S.t += dt;
-  const sun = sunAt(S.t % 24); S.sun = sun;
+  const sun = S.sunDir ? sunFromDir(S.sunDir) : sunAt(S.t % 24); S.sun = sun;
   S.prevCloud = S.cloudNow;
   S.cloudNow = cloudAt(S.t, S.cover);
+  if (cloudBlocks()) S.cloudNow = Math.max(S.cloudNow, 0.9);
   const irr = irradiance(sun, S.cloudNow); S.irr = irr;
   panelAxes(S.psi, S.beta);
   if (dt > 0) trackerStep(dt, sun, irr);
@@ -533,6 +590,7 @@ function step(dt) {
   S.Iacc = S.Ipv * taper;
 
   const lampOn = S.lamp && !S.lvd, usbOn = S.usb && !S.lvd;
+  if (G.on && lampOn) { const h = S.t % 24; if (h >= GAME.lampFrom && h < GAME.lampTo) G.lampH += dt; }
   let pUsb = 0;
   for (const ph of S.phones) {
     let p = 0;
@@ -614,6 +672,9 @@ const ESC = [
       { h: 22.5, set: { lamp: false }, msg: 'Lámpara apagada' },
     ],
     obs: 'Un día completo con uso típico de emergencia: luz al amanecer y en la noche, y tandas de celulares. Con 6 cargas de celular y ~4 h de lámpara se consumen ~130–140 Wh y el panel capta ~110–140 Wh. La AGM de 7 Ah no alcanza a cubrir el desfase entre el día y la noche, y el corte por bajo voltaje actúa: es un argumento para ampliar la batería o limitar las cargas desde el agente.' },
+  { id: 'juego', n: 'Juego: la estación del barrio', short: '24 h · tú decides qué se carga', t0: 6, dur: 24, cover: 0, soc: 0.35,
+    lamp: false, usb: true, phones: [], speed: 600, pose: { az: 270, el: 50 }, night: true, cam: 'general', lid: 'cerrada', game: true,
+    obs: 'Eres el agente de la estación. Acepta o rechaza los pedidos de carga (máximo 2 celulares a la vez), aparta las nubes que tapan el panel y prende la lámpara de 18:00 a 22:00. Un corte por bajo voltaje resta 30 puntos, y amanecer con la batería al 40 % o más suma 20.' },
 ];
 
 function applySettings(set, fromEvent) {
@@ -627,7 +688,8 @@ function loadScenario(id, opts = {}) {
   const sc = ESC.find((e) => e.id === id);
   if (!sc) return;
   const scen = { ...sc, events: (sc.events || []).map((e) => ({ ...e, done: false })) };
-  S.scen = scen; S.done = false;
+  S.scen = scen; S.done = false; S.sunDir = null;
+  resetGame(!!sc.game); hideCloud();
   S.t = sc.t0; S.cover = sc.cover; S.soc = sc.soc; S.socStart = sc.soc;
   S.lamp = sc.lamp; S.usb = sc.usb; S.phones = sc.phones.map((s) => ({ soc: s, p: 0 }));
   S.speed = sc.speed; S.track = true; S.lvd = false; S.lvdT = 0; S.lvdEvents = 0; S.corrections = 0;
@@ -654,6 +716,15 @@ function finishScenario() {
   S.run = false; S.done = true;
   const sc = S.scen, gain = S.E.fix > 0.5 ? (S.E.cap / S.E.fix - 1) * 100 : 0;
   const el = $('#esc-summary');
+  if (sc.game) {
+    G.bonus = S.soc >= GAME.socBonus ? 20 : 0; G.final = true; G.req = null; hideCloud();
+    el.innerHTML = '<strong>Puntaje final: ' + gameScore() + '</strong><br>' +
+      'Celulares cargados: ' + G.done + ' (+' + 10 * G.done + ') · aceptados ' + G.accepted + ', rechazados ' + G.rejected + ', sin atender ' + G.missed + '<br>' +
+      'Lámpara de 18 a 22 h: ' + fmt(G.lampH, 1) + ' h (+' + Math.round(10 * G.lampH) + ') · nubes apartadas: ' + G.clouds + ' (+' + 3 * G.clouds + ')<br>' +
+      'Cortes por bajo voltaje: ' + S.lvdEvents + ' (−' + 30 * S.lvdEvents + ') · batería al amanecer ' + Math.round(S.soc * 100) + ' % (+' + G.bonus + ')';
+    el.hidden = false; addLog('Fin del juego: ' + gameScore() + ' puntos'); syncControls();
+    return;
+  }
   el.innerHTML = '<strong>Resumen (' + fmt(sc.dur, 1) + ' h)</strong><br>' +
     'Seguidor: ' + fmt(S.E.cap, 0) + ' Wh · panel fijo: ' + fmt(S.E.fix, 0) + ' Wh' + (S.E.fix > 0.5 ? ' (' + (gain >= 0 ? '+' : '') + fmt(gain, 0) + ' %)' : '') + '<br>' +
     'Consumo: ' + fmt(S.E.load, 0) + ' Wh · batería ' + Math.round(S.socStart * 100) + ' % → ' + Math.round(S.soc * 100) + ' %<br>' +
@@ -676,6 +747,7 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0;
+renderer.xr.enabled = true;
 
 const scene = new THREE.Scene();
 scene.fog = new THREE.Fog(0x87bde6, 25, 90);
@@ -703,6 +775,9 @@ const pad = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.02, 2.4), new THREE.Mesh
 pad.position.set(0.15, -0.009, 0.1); pad.receiveShadow = true; scene.add(pad);
 const grid = new THREE.GridHelper(3.4, 34, 0x6c7168, 0x6c7168);
 grid.scale.z = 2.4 / 3.4; grid.position.set(0.15, 0.002, 0.1); grid.material.transparent = true; grid.material.opacity = 0.25; scene.add(grid);
+// en MR el suelo virtual se oculta y las sombras caen sobre el piso real
+const shadowCatcher = new THREE.Mesh(new THREE.PlaneGeometry(4.4, 3.2), new THREE.ShadowMaterial({ opacity: 0.35 }));
+shadowCatcher.rotation.x = -Math.PI / 2; shadowCatcher.position.set(0.15, 0.001, 0.1); shadowCatcher.receiveShadow = true; shadowCatcher.visible = false; scene.add(shadowCatcher);
 
 function textSprite(txt, color = '#ffffff', size = 0.22, bg = null) {
   const c = document.createElement('canvas'); c.width = 256; c.height = 128;
@@ -1030,6 +1105,99 @@ const sunCloud = new THREE.Group();
 for (let i = 0; i < 5; i++) { const s = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 10), sunCloudMat); s.position.set((i - 2) * 1.2, (i % 2) * 0.5, 0); s.scale.setScalar(1.3 + (i % 3) * 0.3); sunCloud.add(s); }
 scene.add(sunCloud);
 
+/* ── objetos interactivos: nube, sol de mano y pedido de carga ── */
+const PANEL_C = new THREE.Vector3(mm(TRK.x), 0.6, mm(TRK.z)); // centro aproximado del panel
+const nubeMat = new THREE.MeshLambertMaterial({ color: 0xf2f5f7, transparent: true, opacity: 0.92, depthWrite: false });
+const nube = new THREE.Group();
+[[0, 0, 0, 0.11], [0.1, 0.02, 0.01, 0.085], [-0.1, 0.01, -0.01, 0.09], [0.04, 0.07, 0, 0.08], [-0.05, 0.065, 0.02, 0.07]].forEach(([x, y, z, r]) => {
+  const s = new THREE.Mesh(new THREE.SphereGeometry(r, 16, 12), nubeMat); s.position.set(x, y, z); nube.add(s);
+});
+nube.visible = false; scene.add(nube); pickable(nube, 'nube');
+const CLOUD_R = 0.16;
+const cV = new THREE.Vector3();
+// ¿la nube corta el rayo entre el panel y el sol?
+function cloudBlocks() {
+  if (!nube.visible || nube.userData.flying || !S.sun || S.sun.el <= 0) return false;
+  cV.copy(nube.position).sub(PANEL_C);
+  const t = cV.dot(S.sun.dir);
+  return t > 0 && cV.lengthSq() - t * t < CLOUD_R * CLOUD_R;
+}
+function spawnCloud(life) {
+  const d = (S.sun ? S.sun.dir : new THREE.Vector3(0, 1, 0)).clone(); d.y = Math.max(d.y, 0.2); d.normalize();
+  nube.position.copy(PANEL_C).addScaledVector(d, 0.75);
+  nube.visible = true; nube.userData.flying = false; nube.userData.until = life ? S.t + life : 0; nubeMat.opacity = 0.92;
+  syncControls();
+}
+function hideCloud() { nube.visible = false; nube.userData.flying = false; syncControls(); }
+function flyAway(byPlayer) {
+  if (!nube.visible || nube.userData.flying) return;
+  if (byPlayer && G.on && !G.final && (nube.userData.wasBlocking || cloudBlocks())) { G.clouds++; addLog('Nube apartada (+3)'); }
+  nube.userData.wasBlocking = false;
+  const d = S.sun ? S.sun.dir : new THREE.Vector3(0, 1, 0);
+  nube.userData.flying = true; nube.userData.t0 = performance.now();
+  nube.userData.vel = new THREE.Vector3(-d.z, 0.25, d.x).normalize().multiplyScalar(0.6);
+  syncControls();
+}
+
+const sunHandle = new THREE.Group();
+sunHandle.add(new THREE.Mesh(new THREE.SphereGeometry(0.06, 24, 16), new THREE.MeshBasicMaterial({ color: 0xffd27a, toneMapped: false })));
+const sunHalo = new THREE.Mesh(new THREE.RingGeometry(0.075, 0.095, 32), new THREE.MeshBasicMaterial({ color: 0xffb347, transparent: true, opacity: 0.6, side: THREE.DoubleSide, toneMapped: false }));
+sunHandle.add(sunHalo); sunHandle.visible = false; scene.add(sunHandle); pickable(sunHandle, 'solMano');
+const SUN_R = 1.0;
+const sunBeam = new THREE.Line(new THREE.BufferGeometry().setFromPoints([PANEL_C, PANEL_C]), new THREE.LineDashedMaterial({ color: 0xffd27a, dashSize: 0.04, gapSize: 0.03, transparent: true, opacity: 0.8 }));
+sunBeam.visible = false; scene.add(sunBeam);
+
+const reqTex = canvasTex(256, 128, () => {});
+const reqMark = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.12), new THREE.MeshBasicMaterial({ map: reqTex.t, transparent: true, toneMapped: false, depthWrite: false }));
+reqMark.position.set(mm(BOX.x) + 0.34, 0.42, mm(BOX.z) + 0.32); reqMark.visible = false; scene.add(reqMark); pickable(reqMark, 'req');
+
+/* ── reglas del juego ── */
+function gameMsg(m) { G.msg = m; G.msgUntil = performance.now() + 2500; }
+function gameTick() {
+  if (!G.on || G.final) return;
+  if (G.req && S.t > G.req.until) { G.req = null; G.missed++; addLog('Pedido sin atender'); }
+  while (G.reqIdx < GAME.reqAt.length && S.t >= GAME.reqAt[G.reqIdx]) {
+    if (!G.req) { G.req = { until: GAME.reqAt[G.reqIdx] + GAME.reqLife }; addLog('Un vecino pide cargar su celular'); }
+    G.reqIdx++;
+  }
+  if (G.cloudIdx < GAME.cloudAt.length && S.t >= GAME.cloudAt[G.cloudIdx]) {
+    G.cloudIdx++;
+    if (!nube.visible || nube.userData.flying) { spawnCloud(GAME.cloudLife); addLog('Una nube tapa el panel'); }
+  }
+  if (nube.visible && !nube.userData.flying && nube.userData.until && S.t > nube.userData.until) flyAway(false);
+  for (let i = S.phones.length - 1; i >= 0; i--) if (S.phones[i].soc >= GAME.phoneDone) { S.phones.splice(i, 1); G.done++; addLog('Celular cargado (+10)'); syncControls(); }
+}
+function acceptReq() {
+  if (!G.req) return;
+  if (S.phones.length >= 2) { gameMsg('Los 2 puertos USB están ocupados.'); return; }
+  S.phones.push({ soc: 0.1 + 0.1 * Math.random(), p: 0 }); G.req = null; G.accepted++;
+  addLog('Celular conectado' + (S.usb ? '' : ': enciende el USB')); syncControls();
+}
+function rejectReq() { if (!G.req) return; G.req = null; G.rejected++; addLog('Pedido rechazado'); }
+// consejo del agente (la RPi): balance de energía hasta el amanecer
+function agentHint() {
+  if (!G.on || G.final || !S.sun) return '';
+  const h = S.t % 24;
+  if (S.lvd) return 'Corte por bajo voltaje: todo queda apagado hasta que el sol recargue la batería.';
+  if (cloudBlocks()) return 'Una nube tapa el panel: apártala.';
+  const evening = h >= 16 || h < 6;
+  const toDawn = evening ? (6 - h + 24) % 24 : 0;
+  const lampLeft = !evening || h >= GAME.lampTo || h < 6 ? 0 : GAME.lampTo - Math.max(h, GAME.lampFrom);
+  const phonesWh = S.phones.reduce((a, p) => a + Math.max(0, GAME.phoneDone - p.soc) * P.phoneWh / P.etaUsb, 0);
+  const need = lampLeft * P.lamp + toDawn * 1.4 + phonesWh;
+  const avail = Math.max(0, S.soc - 0.25) * P.cap * 12;
+  if (G.req) {
+    if (S.phones.length >= 2) return 'Agente: los 2 USB están ocupados; espera a que termine un celular.';
+    if (!evening && S.Pavail > 5) return 'Agente: hay sol de sobra, acepta el celular.';
+    return avail - need > 13 ? 'Agente: alcanza la energía, puedes aceptarlo.' : 'Agente: si lo aceptas no alcanza para la noche. Mejor recházalo.';
+  }
+  if (h >= GAME.lampFrom && h < GAME.lampTo && !S.lamp) return 'El barrio necesita luz de 18:00 a 22:00: enciende LUZ.';
+  if (S.phones.length && !S.usb) return 'Hay celulares conectados pero el USB está apagado.';
+  if ((h >= GAME.lampTo || h < 6) && S.lamp) return 'Ya nadie usa la lámpara: apágala para ahorrar.';
+  if (evening && avail < need) return 'Agente: con este consumo la batería no llega al amanecer.';
+  return '';
+}
+
 /* ───────── fichas de información ───────── */
 const onOff = (b) => (b ? 'encendido' : 'apagado');
 const W = (x) => fmt(x, 1) + ' W';
@@ -1117,6 +1285,9 @@ canvas.addEventListener('pointerup', (e) => {
   if (moved > 6) return;
   const k = pickAt(e);
   if (!k) { hideInfo(); return; }
+  if (k === 'nube') { flyAway(true); return; }
+  if (k === 'req') { acceptReq(); return; }
+  if (!INFO[k]) return;
   if (k === 'swLuz') { S.lamp = !S.lamp; syncControls(); }
   if (k === 'swUsb') { S.usb = !S.usb; syncControls(); }
   showInfo(k);
@@ -1158,6 +1329,7 @@ function syncControls() {
   $('#t-lamp').setAttribute('aria-pressed', S.lamp); $('#t-usb').setAttribute('aria-pressed', S.usb);
   $('#t-track').setAttribute('aria-pressed', S.track); $('#t-ref').setAttribute('aria-pressed', S.ref);
   $('#phones').value = String(S.phones.length);
+  $('#t-cloud').setAttribute('aria-pressed', nube.visible && !nube.userData.flying);
   $('#play').textContent = S.run ? '❚❚' : '▶'; $('#play').setAttribute('aria-label', S.run ? 'Pausar simulación' : 'Continuar simulación');
 }
 const missions = $('#missions');
@@ -1183,6 +1355,9 @@ $('#t-lamp').onclick = () => { S.lamp = !S.lamp; syncControls(); };
 $('#t-usb').onclick = () => { S.usb = !S.usb; syncControls(); };
 $('#t-track').onclick = () => { S.track = !S.track; if (S.track) S.mode = 'seguimiento'; syncControls(); };
 $('#t-ref').onclick = () => { S.ref = !S.ref; refG.visible = S.ref; syncControls(); };
+$('#t-cloud').onclick = () => { if (nube.visible && !nube.userData.flying) flyAway(true); else spawnCloud(0); };
+$('#g-accept').onclick = acceptReq;
+$('#g-reject').onclick = rejectReq;
 $('#phones').onchange = (e) => { const n = +e.target.value; while (S.phones.length < n) S.phones.push({ soc: 0.2, p: 0 }); S.phones.length = n; syncControls(); };
 $('#play').onclick = togglePlay;
 function togglePlay() {
@@ -1226,6 +1401,314 @@ window.addEventListener('keydown', (e) => {
   else if (e.key === 't' || e.key === 'T') { const o = ['cerrada', 'transparente', 'abierta']; setLid(o[(o.indexOf(S.lid) + 1) % 3]); }
   else if (e.key === 'Escape') { hideInfo(); document.querySelectorAll('.modal-backdrop').forEach((m) => m.hidden = true); }
 });
+
+/* ───────── realidad mixta / virtual (WebXR) ───────── */
+const XR = { mode: null, session: null, ar: false, hitSrc: null, placed: false, placing: false, placeReq: false, hit: null,
+  head: new THREE.Vector3(), grab: null, hover: new Set(), saved: null, ctrls: [] };
+const inAR = () => !!XR.session && XR.ar;
+
+function rr(g, x, y, w, h, r, fill, stroke) {
+  g.beginPath(); g.roundRect(x, y, w, h, r);
+  if (fill) { g.fillStyle = fill; g.fill(); }
+  if (stroke) { g.strokeStyle = stroke; g.lineWidth = 3; g.stroke(); }
+}
+function wrapText(g, text, x, y, maxW, lh, maxLines) {
+  let line = '', n = 0;
+  for (const w of text.split(' ')) {
+    const test = line ? line + ' ' + w : w;
+    if (g.measureText(test).width > maxW && line) { g.fillText(line, x, y + n * lh); line = w; if (++n >= maxLines) return; }
+    else line = test;
+  }
+  if (line) g.fillText(line, x, y + n * lh);
+}
+
+// tablero flotante: medidas, juego, ficha de la pieza y botones
+const hudTex = canvasTex(512, 384, () => {});
+const hud = new THREE.Group(); hud.position.set(-1.05, 1.2, 0.45); hud.visible = false; scene.add(hud);
+const hudPanel = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.375), new THREE.MeshBasicMaterial({ map: hudTex.t, transparent: true, toneMapped: false }));
+hud.add(hudPanel); pickable(hudPanel, 'hud');
+const sitIds = ESC.filter((e) => !e.game).map((e) => e.id);
+const HUD_BTNS = [
+  ['btnJuego', () => (G.on && !G.final ? 'Reiniciar' : 'Juego')],
+  ['btnSit', () => 'Situación ▸'],
+  ['btnSol', () => (S.sunDir ? 'Sol: manual' : 'Sol: real')],
+  ['btnNube', () => (nube.visible && !nube.userData.flying ? 'Quitar nube' : 'Nube')],
+  ['btnTapa', () => 'Tapa'],
+  ['btnPausa', () => (S.run ? 'Pausa' : 'Seguir')],
+  ['btnMover', () => 'Mover'],
+  ['btnSalir', () => 'Salir'],
+];
+const hudBtns = HUD_BTNS.map(([key, label], i) => {
+  const tex = canvasTex(256, 96, () => {});
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(0.115, 0.043), new THREE.MeshBasicMaterial({ map: tex.t, transparent: true, toneMapped: false }));
+  m.position.set(-0.1875 + (i % 4) * 0.125, -0.218 - Math.floor(i / 4) * 0.052, 0.002);
+  hud.add(m); pickable(m, key);
+  return { key, label, tex, last: '' };
+});
+function drawBtn(b) {
+  const label = b.label(), hov = XR.hover.has(b.key), id = label + hov;
+  if (b.last === id) return; b.last = id;
+  const { g, t } = b.tex;
+  g.clearRect(0, 0, 256, 96);
+  rr(g, 4, 4, 248, 88, 18, hov ? '#f5b84a' : 'rgba(17,31,35,0.95)', hov ? null : 'rgba(255,255,255,0.35)');
+  g.fillStyle = hov ? '#1c1405' : '#e7f0ed'; g.font = '650 32px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(label, 128, 50); t.needsUpdate = true;
+}
+function drawHud() {
+  const { g, t } = hudTex;
+  g.clearRect(0, 0, 512, 384);
+  rr(g, 4, 4, 504, 376, 22, 'rgba(12,21,23,0.9)', 'rgba(245,184,74,0.7)');
+  g.textBaseline = 'alphabetic'; g.textAlign = 'left';
+  g.fillStyle = '#9bb0aa'; g.font = '600 20px system-ui, sans-serif';
+  wrapText(g, G.on || G.final ? 'Juego · la estación del barrio' : S.scen ? S.scen.n : S.sunDir ? 'Sol manual' : 'Modo libre', 24, 40, 464, 24, 1);
+  g.fillStyle = '#e7f0ed'; g.font = '700 46px system-ui, sans-serif'; g.fillText(hhmm(S.t), 24, 96);
+  g.font = '650 28px system-ui, sans-serif'; g.textAlign = 'right';
+  g.fillText(Math.round(S.soc * 100) + ' % · ' + fmt(S.V, 1) + ' V', 488, 82);
+  rr(g, 250, 94, 238, 10, 5, 'rgba(255,255,255,.12)');
+  rr(g, 250, 94, Math.max(10, 238 * S.soc), 10, 5, S.soc < 0.3 ? '#ff7a6b' : S.soc < 0.5 ? '#f5b84a' : '#7ee08a');
+  g.textAlign = 'left'; g.font = '500 21px system-ui, sans-serif'; g.fillStyle = '#cfdcd8';
+  g.fillText('Panel ' + W(S.Pavail) + ' · consumo ' + W(S.Pload), 24, 140);
+  g.fillText('Seguidor: ' + S.mode + (S.lvd ? ' · CORTE' : ''), 24, 168);
+  g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(24, 184, 464, 2);
+  if (XR.placing) {
+    g.fillStyle = '#f5b84a'; g.font = '600 22px system-ui, sans-serif';
+    wrapText(g, 'Apunta al piso y aprieta el gatillo sobre el anillo para poner la estación ahí.', 24, 224, 464, 28, 4);
+  } else if (G.on || G.final) {
+    g.fillStyle = '#f5b84a'; g.font = '800 40px system-ui, sans-serif'; g.fillText(gameScore() + ' pts', 24, 228);
+    g.textAlign = 'right'; g.fillStyle = '#9bb0aa'; g.font = '500 19px system-ui, sans-serif';
+    g.fillText('cargados ' + G.done + ' · luz ' + fmt(G.lampH, 1) + ' h', 488, 222); g.textAlign = 'left';
+    const msg = G.final ? 'Fin del juego. Pulsa Juego para jugar otra vez.'
+      : (G.msg && performance.now() < G.msgUntil) ? G.msg
+      : G.req ? 'Pedido de carga: toca el letrero junto a la caja para aceptarlo. ' + agentHint()
+      : agentHint() || 'Atiende los pedidos y cuida la batería.';
+    g.fillStyle = '#e7f0ed'; g.font = '500 20px system-ui, sans-serif'; wrapText(g, msg, 24, 264, 464, 26, 4);
+  } else if (infoKey && INFO[infoKey]) {
+    g.fillStyle = '#f5b84a'; g.font = '650 22px system-ui, sans-serif'; wrapText(g, INFO[infoKey].t, 24, 220, 464, 26, 1);
+    g.font = '500 19px system-ui, sans-serif';
+    INFO[infoKey].v().slice(0, 5).forEach(([k, v], i) => {
+      g.textAlign = 'left'; g.fillStyle = '#9bb0aa'; g.fillText(k, 24, 254 + i * 26);
+      g.textAlign = 'right'; g.fillStyle = '#e7f0ed'; g.fillText(v, 488, 254 + i * 26);
+    });
+    g.textAlign = 'left';
+  } else {
+    g.fillStyle = '#9bb0aa'; g.font = '500 20px system-ui, sans-serif';
+    wrapText(g, 'Toca una pieza para ver qué hace. Agarra el sol (la esfera amarilla) y llévalo por el cielo: el seguidor lo persigue. Pon una nube delante del panel y mira caer la corriente.', 24, 222, 464, 27, 5);
+  }
+  t.needsUpdate = true;
+}
+function drawReq() {
+  if (!G.req) return;
+  const { g, t } = reqTex;
+  g.clearRect(0, 0, 256, 128);
+  rr(g, 4, 4, 248, 120, 20, 'rgba(12,21,23,0.92)', '#5fd3b5');
+  rr(g, 20, 22, 40, 74, 8, null, '#e7f0ed'); g.fillStyle = '#ff7a6b'; g.fillRect(28, 72, 24, 16);
+  g.fillStyle = '#e7f0ed'; g.font = '700 26px system-ui, sans-serif'; g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+  g.fillText('¿Cargar', 76, 52); g.fillText('celular?', 76, 84);
+  rr(g, 76, 98, 1 + 156 * clamp((G.req.until - S.t) / GAME.reqLife, 0, 1), 10, 5, '#5fd3b5');
+  t.needsUpdate = true;
+}
+
+const reticle = new THREE.Mesh(new THREE.RingGeometry(0.1, 0.13, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xf5b84a, toneMapped: false }));
+reticle.matrixAutoUpdate = false; reticle.visible = false; scene.add(reticle);
+
+// controles (y manos: el pellizco dispara select)
+const xrRay = new THREE.Raycaster(); xrRay.camera = camera;
+const tmpM = new THREE.Matrix4();
+function ctrlRay(c) {
+  tmpM.identity().extractRotation(c.matrixWorld);
+  xrRay.ray.origin.setFromMatrixPosition(c.matrixWorld);
+  xrRay.ray.direction.set(0, 0, -1).applyMatrix4(tmpM);
+}
+function xrPick(c) {
+  ctrlRay(c);
+  for (const h of xrRay.intersectObjects(Object.values(PICK).flat(), true)) {
+    if (!shownChain(h.object)) continue;
+    let o = h.object; while (o && !o.userData.pick) o = o.parent;
+    if (!o) continue;
+    const k = o.userData.pick;
+    if (k === 'caja' && S.lid === 'transparente') continue;
+    return { key: k, dist: h.distance };
+  }
+  return null;
+}
+const rayGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1)]);
+const ctrlFactory = new XRControllerModelFactory();
+for (let i = 0; i < 2; i++) {
+  const c = renderer.xr.getController(i);
+  const line = new THREE.Line(rayGeo, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.75 }));
+  line.scale.z = 3; c.add(line); c.userData.line = line;
+  c.addEventListener('selectstart', onSelectStart);
+  c.addEventListener('selectend', onSelectEnd);
+  c.addEventListener('connected', (e) => { line.visible = e.data.targetRayMode !== 'screen'; });
+  scene.add(c); XR.ctrls.push(c);
+  const grip = renderer.xr.getControllerGrip(i);
+  grip.add(ctrlFactory.createControllerModel(grip)); scene.add(grip);
+}
+
+function enterManualSun() {
+  S.sunDir = S.sun && S.sun.el > 3 ? S.sun.dir.clone() : new THREE.Vector3(0.45, 0.75, 0.45).normalize();
+  S.scen = null; S.done = false; resetGame(false); S.speed = 10; S.run = true; S.night = false; S.nightT = 0;
+  if (S.track) S.mode = 'seguimiento';
+  document.querySelectorAll('.mission').forEach((b) => b.classList.remove('active'));
+  $('#esc-eyebrow').textContent = 'Modo libre'; $('#esc-title').textContent = 'Sol manual';
+  $('#esc-obs').textContent = 'El sol lo mueves tú en MR: el seguidor lo persigue con el error de sus 4 LDR.';
+  $('#esc-summary').hidden = true;
+  addLog('Sol manual'); syncControls();
+}
+function exitManualSun() { S.sunDir = null; S.speed = 300; addLog('Sol real'); syncControls(); }
+
+function xrAction(k) {
+  switch (k) {
+    case 'btnJuego': loadScenario('juego', { keepCam: true }); break;
+    case 'btnSit': { const i = S.scen ? sitIds.indexOf(S.scen.id) : -1; loadScenario(sitIds[(i + 1) % sitIds.length], { keepCam: true }); break; }
+    case 'btnSol': if (S.sunDir) exitManualSun(); else enterManualSun(); break;
+    case 'btnNube': if (nube.visible && !nube.userData.flying) flyAway(true); else spawnCloud(0); break;
+    case 'btnTapa': { const o = ['cerrada', 'transparente', 'abierta']; setLid(o[(o.indexOf(S.lid) + 1) % 3]); break; }
+    case 'btnPausa': togglePlay(); break;
+    case 'btnMover': if (XR.ar && XR.hitSrc) XR.placing = true; else XR.placed = false; break;
+    case 'btnSalir': XR.session?.end(); break;
+    case 'req': acceptReq(); break;
+    default:
+      if (k === 'swLuz') { S.lamp = !S.lamp; syncControls(); }
+      if (k === 'swUsb') { S.usb = !S.usb; syncControls(); }
+      if (INFO[k]) showInfo(k);
+  }
+}
+function onSelectStart(e) {
+  if (!renderer.xr.isPresenting) return;
+  const c = e.target, hit = xrPick(c);
+  if (!hit) { if (XR.placing && reticle.visible) XR.placeReq = true; else hideInfo(); return; }
+  if (hit.key === 'hud') return;
+  if (hit.key === 'solMano') {
+    if (!S.sunDir) enterManualSun();
+    XR.grab = { c, key: 'solMano', dist: hit.dist, start: sunHandle.position.clone(), moved: 0 }; return;
+  }
+  if (hit.key === 'nube') {
+    nube.userData.wasBlocking = cloudBlocks();
+    XR.grab = { c, key: 'nube', dist: hit.dist, start: nube.position.clone(), moved: 0 }; return;
+  }
+  xrAction(hit.key);
+}
+function onSelectEnd(e) {
+  if (!XR.grab || XR.grab.c !== e.target) return;
+  // en el juego, o con un toque sin arrastrar, la nube se va volando
+  if (XR.grab.key === 'nube' && (G.on || XR.grab.moved < 0.04)) flyAway(true);
+  XR.grab = null;
+}
+
+// pone el origen de la escena en (x, y, z) del espacio actual, con el frente (+z) mirando al usuario
+function placeAt(ref, x, y, z) {
+  const th = Math.atan2(XR.head.x - x, XR.head.z - z);
+  renderer.xr.setReferenceSpace(ref.getOffsetReferenceSpace(new XRRigidTransform({ x, y, z }, { x: 0, y: Math.sin(th / 2), z: 0, w: Math.cos(th / 2) })));
+  XR.placed = true; XR.placing = false; reticle.visible = false;
+}
+const fwdV = new THREE.Vector3(), qTmp = new THREE.Quaternion(), grabT = new THREE.Vector3();
+function xrUpdate(xrFrame) {
+  const ref = renderer.xr.getReferenceSpace();
+  const pose = xrFrame.getViewerPose(ref);
+  if (pose) {
+    const p = pose.transform.position, o = pose.transform.orientation;
+    XR.head.set(p.x, p.y, p.z);
+    if (!XR.placed) {
+      fwdV.set(0, 0, -1).applyQuaternion(qTmp.set(o.x, o.y, o.z, o.w)); fwdV.y = 0;
+      if (fwdV.lengthSq() < 1e-4) fwdV.set(0, 0, -1);
+      fwdV.normalize();
+      placeAt(ref, p.x + fwdV.x * 1.7, 0, p.z + fwdV.z * 1.7);
+      return;
+    }
+  }
+  if (XR.placing && XR.hitSrc) {
+    const res = xrFrame.getHitTestResults(XR.hitSrc);
+    const hp = res.length ? res[0].getPose(ref) : null;
+    reticle.visible = !!hp;
+    if (hp) { reticle.matrix.fromArray(hp.transform.matrix); XR.hit = hp.transform.position; }
+  }
+  if (XR.placeReq) { XR.placeReq = false; if (XR.hit && reticle.visible) { placeAt(ref, XR.hit.x, XR.hit.y, XR.hit.z); return; } }
+  if (XR.grab) {
+    ctrlRay(XR.grab.c);
+    grabT.copy(xrRay.ray.origin).addScaledVector(xrRay.ray.direction, XR.grab.dist);
+    XR.grab.moved = Math.max(XR.grab.moved, grabT.distanceTo(XR.grab.start));
+    if (XR.grab.key === 'solMano') {
+      const d = grabT.sub(PANEL_C).normalize();
+      if (d.y < 0.05) { d.y = 0.05; d.normalize(); }
+      S.sunDir.copy(d);
+    } else nube.position.copy(grabT);
+  }
+  XR.hover.clear();
+  for (const c of XR.ctrls) {
+    const line = c.userData.line;
+    if (XR.grab && XR.grab.c === c) { line.scale.z = XR.grab.dist; line.material.color.setHex(0xf5b84a); continue; }
+    const h = xrPick(c);
+    line.scale.z = h ? h.dist : 3;
+    line.material.color.setHex(h && h.key !== 'hud' ? 0xf5b84a : 0xffffff);
+    if (h) XR.hover.add(h.key);
+  }
+}
+
+function setShadowRes(n) {
+  sunLight.shadow.mapSize.set(n, n);
+  if (sunLight.shadow.map) { sunLight.shadow.map.dispose(); sunLight.shadow.map = null; }
+}
+function setArLook(on) {
+  ground.visible = pad.visible = grid.visible = stars.visible = !on;
+  clouds.forEach((c) => (c.visible = !on));
+  shadowCatcher.visible = on;
+  renderer.setClearAlpha(on ? 0 : 1);
+  if (on) { scene.background = null; scene.fog = null; } else scene.fog = XR.saved.fog;
+}
+function onXRStart(session) {
+  Object.assign(XR, { session, ar: XR.mode === 'immersive-ar', placed: false, placing: false, placeReq: false, hitSrc: null, grab: null, hit: null });
+  XR.saved = { pos: camera.position.clone(), fov: camera.fov, fog: scene.fog };
+  hideInfo(); document.querySelectorAll('.modal-backdrop').forEach((m) => (m.hidden = true));
+  controls.enabled = false; camAnim = null; hud.visible = true;
+  hudBtns.forEach((b) => (b.last = ''));
+  if (XR.ar) setArLook(true);
+  setShadowRes(1024);
+  if (XR.ar && session.requestHitTestSource) {
+    session.requestReferenceSpace('viewer')
+      .then((vs) => session.requestHitTestSource({ space: vs }))
+      .then((src) => { XR.hitSrc = src; XR.placing = true; })
+      .catch(() => {});
+  }
+  session.addEventListener('end', onXREnd);
+  $('#xr-label').textContent = 'Salir';
+}
+function onXREnd() {
+  try { XR.hitSrc?.cancel(); } catch (e) {}
+  if (XR.ar) setArLook(false);
+  Object.assign(XR, { session: null, hitSrc: null, grab: null, placing: false });
+  XR.hover.clear(); reticle.visible = false; hud.visible = false;
+  renderer.xr.setReferenceSpace(null);
+  setShadowRes(2048);
+  controls.enabled = true;
+  camera.fov = XR.saved.fov; camera.position.copy(XR.saved.pos);
+  renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
+  camera.aspect = canvas.clientWidth / canvas.clientHeight; camera.updateProjectionMatrix();
+  $('#xr-label').textContent = XR.mode === 'immersive-ar' ? 'Entrar en MR' : 'Entrar en VR';
+}
+const xrBtn = $('#xr-btn');
+if (navigator.xr && window.isSecureContext) {
+  const sup = (m) => navigator.xr.isSessionSupported(m).catch(() => false);
+  sup('immersive-ar').then((ar) => (ar ? 'immersive-ar' : sup('immersive-vr').then((vr) => (vr ? 'immersive-vr' : null)))).then((mode) => {
+    if (!mode) return;
+    XR.mode = mode; xrBtn.hidden = false;
+    $('#xr-label').textContent = mode === 'immersive-ar' ? 'Entrar en MR' : 'Entrar en VR';
+  });
+}
+xrBtn.onclick = async () => {
+  if (XR.session) { XR.session.end(); return; }
+  let session = null;
+  try {
+    session = await navigator.xr.requestSession(XR.mode, { requiredFeatures: ['local-floor'], optionalFeatures: ['hit-test', 'hand-tracking'] });
+    renderer.xr.setReferenceSpaceType('local-floor');
+    await renderer.xr.setSession(session);
+    onXRStart(session);
+  } catch (err) {
+    console.error(err);
+    if (session) session.end().catch(() => {});
+    $('#xr-label').textContent = 'No se pudo entrar';
+  }
+};
 
 /* ───────── LCD, celulares, métricas, gráfico ───────── */
 function lcdLines() {
@@ -1283,6 +1766,12 @@ function renderMetrics() {
   if (!draggingHour) { $('#hour').value = (S.t % 24).toFixed(2); }
   $('#hour-val').textContent = hhmm(S.t);
   $('#soc').value = S.soc; $('#soc-val').textContent = Math.round(S.soc * 100) + ' %';
+  const gm = $('#game'); gm.hidden = !(G.on || G.final);
+  if (!gm.hidden) {
+    $('#g-score').textContent = gameScore();
+    $('#g-hint').textContent = G.final ? 'Juego terminado. Pulsa la situación 7 para jugar de nuevo.' : (G.msg && performance.now() < G.msgUntil) ? G.msg : agentHint();
+    $('#g-req').hidden = !G.req;
+  }
 }
 const chart = $('#chart');
 function drawChart() {
@@ -1316,7 +1805,7 @@ function updateVisuals(dtR, now) {
   const sun = S.sun, el = sun.el;
   const day = smooth(-6, 10, el), dusk = smooth(-8, 2, el) * (1 - smooth(4, 22, el));
   sky.copy(cNight).lerp(cDay, day).lerp(cDusk, dusk * 0.65).lerp(cOver, S.cover * 0.55 * day);
-  scene.background = sky; scene.fog.color.copy(sky);
+  if (!inAR()) { scene.background = sky; scene.fog.color.copy(sky); }
   hemi.intensity = 0.6 + 0.35 * day; hemi.color.copy(sky).lerp(day > 0.3 ? WHITE : MOON, day > 0.3 ? 0.4 : 0.6);
   hemi.groundColor.setHex(day > 0.3 ? 0x3a4430 : 0x1c2430);
   const dniRatio = S.irr.dni / 950;
@@ -1344,9 +1833,27 @@ function updateVisuals(dtR, now) {
   switches.forEach((s, i) => { s.lever.rotation.x = sw[i] ? -0.5 : 0.5; s.ring.material.emissiveIntensity = sw[i] ? 1.6 : 0; });
   refG.visible = S.ref;
   if (highlight.visible) highlight.setFromObject(highlight.userData.obj);
-  if (now - lastLcd > 250) { lastLcd = now; drawLcd(); drawPhones(); }
+  // nube que se va volando
+  if (nube.userData.flying) {
+    const k = (now - nube.userData.t0) / 1500;
+    nube.position.addScaledVector(nube.userData.vel, dtR); nubeMat.opacity = 0.92 * (1 - clamp(k, 0, 1));
+    if (k >= 1) hideCloud();
+  }
+  // sol de mano (solo en MR/VR y fuera del juego)
+  const xr = renderer.xr.isPresenting;
+  sunHandle.visible = sunBeam.visible = xr && !G.on && (!!S.sunDir || el > 0);
+  if (sunHandle.visible) {
+    sunHandle.position.copy(PANEL_C).addScaledVector(sun.dir, SUN_R); sunHalo.lookAt(camera.position);
+    sunBeam.geometry.attributes.position.setXYZ(1, sunHandle.position.x, sunHandle.position.y, sunHandle.position.z);
+    sunBeam.geometry.attributes.position.needsUpdate = true; sunBeam.computeLineDistances();
+    sunBeam.material.color.setHex(cloudBlocks() ? 0x6f847e : 0xffd27a);
+  }
+  reqMark.visible = !!G.req;
+  if (reqMark.visible) { reqMark.position.y = 0.42 + 0.015 * Math.sin(now / 300); reqMark.lookAt(camera.position); }
+  if (xr) { hud.lookAt(camera.position.x, hud.position.y, camera.position.z); hudBtns.forEach(drawBtn); }
+  if (now - lastLcd > 250) { lastLcd = now; drawLcd(); drawPhones(); drawReq(); if (xr) drawHud(); }
   if (now - lastUi > 150) { lastUi = now; renderMetrics(); renderInfoLive(); }
-  if (now - lastChart > 300) { lastChart = now; drawChart(); }
+  if (!xr && now - lastChart > 300) { lastChart = now; drawChart(); }
 }
 
 /* ───────── bucle ───────── */
@@ -1357,24 +1864,28 @@ function resize() {
   }
 }
 let last = performance.now();
-function frame(now) {
-  const dtR = Math.min(0.1, (now - last) / 1000); last = now;
+function frame(now, xrFrame) {
+  const dtR = clamp((now - last) / 1000, 0, 0.1); last = now;
   if (S.run) {
     let dts = dtR * S.speed, finish = false;
     if (S.scen) { const rem = (S.scen.t0 + S.scen.dur - S.t) * 3600; if (dts >= rem) { dts = Math.max(0, rem); finish = true; } }
     while (dts > 1e-6) { const d = Math.min(dts, 5); step(d / 3600); dts -= d; }
+    gameTick();
     if (finish) finishScenario();
   }
-  if (camAnim) {
-    const k = smooth(0, 1, (now - camAnim.t0) / 900);
-    camera.position.lerpVectors(camAnim.p0, camAnim.p1, k); controls.target.lerpVectors(camAnim.q0, camAnim.q1, k);
-    if (k >= 1) camAnim = null;
+  const xr = renderer.xr.isPresenting;
+  if (xr && xrFrame) xrUpdate(xrFrame);
+  if (!xr) {
+    if (camAnim) {
+      const k = smooth(0, 1, (now - camAnim.t0) / 900);
+      camera.position.lerpVectors(camAnim.p0, camAnim.p1, k); controls.target.lerpVectors(camAnim.q0, camAnim.q1, k);
+      if (k >= 1) camAnim = null;
+    }
+    resize();
   }
-  resize();
   updateVisuals(dtR, now);
-  controls.update();
+  if (!xr) controls.update();
   renderer.render(scene, camera);
-  requestAnimationFrame(frame);
 }
 
 /* ───────── arranque ───────── */
@@ -1385,8 +1896,9 @@ camera.position.set(...CAMS[S.cam].p); controls.target.set(...CAMS[S.cam].t); ca
 syncControls();
 $('#loading').hidden = true;
 try { if (!localStorage.getItem('solar3d-intro')) { openModal('help'); localStorage.setItem('solar3d-intro', '1'); } } catch (e) { openModal('help'); }
-window.solar = { S, P, ESC, step, loadScenario, finishScenario, setLid, setCam }; // para depurar desde la consola
-requestAnimationFrame((t) => { last = t; frame(t); });
+window.solar = { S, P, ESC, G, GAME, XR, step, loadScenario, finishScenario, setLid, setCam, gameTick, gameScore, acceptReq, rejectReq, spawnCloud, flyAway, cloudBlocks, agentHint, hud, hudTex, drawHud, xrAction, xrPick }; // para depurar desde la consola
+last = performance.now();
+renderer.setAnimationLoop(frame);
 </script>
 </body>
 </html>

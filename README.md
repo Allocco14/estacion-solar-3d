@@ -20,8 +20,44 @@ Al hacer clic sobre una pieza aparece una ficha con su función y su valor en vi
 | 4 | Noche de apagón | Lámpara hasta las 22:00 + 2 celulares: la batería pasa de 100 % a ~30 %, y el STM32 apaga la RPi |
 | 5 | Batería baja | El relé 3 corta a 11,8 V, la RPi se apaga y el sistema reconecta a 12,4 V al día siguiente (~10 h) |
 | 6 | Día de emergencia (24 h) | Uso típico con 6 cargas de celular y lámpara: el balance es negativo con la AGM de 7 Ah y el corte actúa |
+| 7 | **Juego: la estación del barrio** | Tú eres el agente durante 24 h (ver abajo) |
 
-Las teclas `1`–`6` cargan las situaciones, `espacio` pausa y `T` cambia la tapa. El botón **Compartir** genera un enlace y un QR a la situación actual (`?escenario=soleado|amanecer|nubes|noche|bateria|emergencia`).
+Las teclas `1`–`7` cargan las situaciones, `espacio` pausa y `T` cambia la tapa. **Tapar el sol** pone una nube entre el sol y el panel; con un clic se aparta. El botón **Compartir** genera un enlace y un QR a la situación actual (`?escenario=soleado|amanecer|nubes|noche|bateria|emergencia|juego`).
+
+## Juego: la estación del barrio
+
+El juego empieza a las 06:00 con la batería al 35 % y dura 24 h, unos 2,4 min a 10 min/s. Durante ese tiempo:
+
+- Los vecinos piden cargar el celular (9 pedidos de 1,5 h cada uno). Se aceptan o se rechazan, con un máximo de 2 a la vez por los 2 USB.
+- De 18:00 a 22:00 el barrio necesita la lámpara.
+- En el día llegan 3 nubes y se quedan tapando el panel hasta que alguien las aparta.
+- El agente (la RPi) avisa si la energía alcanza para la noche antes de aceptar un celular.
+
+| Acción | Puntos |
+|---|---|
+| Celular cargado al 80 % | +10 |
+| Hora de lámpara entre 18 y 22 h | +10 |
+| Nube apartada | +3 |
+| Corte por bajo voltaje | −30 |
+| Amanecer con SoC ≥ 40 % | +20 |
+
+Corrimos partidas automáticas desde la consola con el modelo de arriba. Aceptar todo da ~77 puntos (6 celulares, pero hay un corte a las ~22 h). Rechazar todo da ~69, y seguir al agente da ~99 (5 celulares, sin corte). Si no se apartan las nubes, el corte llega aunque se siga al agente (~60).
+
+## Realidad mixta (Meta Quest)
+
+La página usa WebXR. Si el navegador soporta `immersive-ar` (Meta Quest Browser), aparece el botón **Entrar en MR**; si solo soporta `immersive-vr`, el botón dice **Entrar en VR**.
+
+- La estación aparece **a escala real** sobre el piso, 1,7 m delante del usuario y con la caja mirando hacia él. En MR se oculta el suelo virtual y las sombras caen sobre el piso real.
+- **Mover:** con *hit-test* aparece un anillo en el piso real; se aprieta el gatillo sobre él para poner la estación ahí. Sin *hit-test*, el botón Mover la vuelve a poner delante.
+- **Controles o manos** (el pellizco cuenta como gatillo):
+  - Tocar una pieza muestra su ficha en el tablero flotante.
+  - LUZ y USB se conmutan en el frente de la caja.
+  - El letrero junto a la caja acepta un celular.
+- **Sol de mano:** la esfera amarilla está a 1 m del panel, en la dirección del sol. Si se agarra y se arrastra, el sol pasa a modo manual y el seguidor lo persigue con el error de sus 4 LDR. La simulación queda a 10× para que se vea la respuesta.
+- **Nube:** se agarra y se mueve. Si queda en la línea panel–sol, la corriente cae (DNI −95 %). Un toque la aparta.
+- **Tablero flotante:** muestra la hora, el SoC, el panel, el consumo, el estado del seguidor y el puntaje o la ficha de la pieza. Botones: Juego, Situación ▸, Sol (real/manual), Nube, Tapa, Pausa, Mover y Salir.
+
+Del modo MR solo se probaron en escritorio la lógica, el raycast y el tablero. Antes de la sesión con las gafas hay que probarlo en una Quest real.
 
 ## Supuestos del modelo
 
@@ -48,7 +84,7 @@ cd simulacion
 python -m http.server 8080
 ```
 
-Después se abre <http://localhost:8080/>. Desde la consola del navegador, `solar.S` muestra el estado del modelo.
+Después se abre <http://localhost:8080/>. Desde la consola del navegador, `solar.S` muestra el estado del modelo y `solar.G` el del juego. WebXR necesita HTTPS (o `localhost`), así que en la Quest conviene usar la versión publicada.
 
 ## Publicación
 
