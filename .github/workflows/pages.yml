@@ -1,7 +1,7 @@
-name: Publicar simulación 3D
+name: Publicar sitio del proyecto
 
-# Vive en simulacion/ del repo del curso (privado) y llega a la raiz del repo
-# publico Allocco14/estacion-solar-3d con `git subtree push` (ver README).
+# Vive en sitio/ del repo del curso (privado) y llega a la raiz del repo
+# publico Allocco14/estacion-solar-3d con scripts/publicar-sitio.sh.
 on:
   push:
     branches:

@@ -1,0 +1,750 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Requerimientos · Estación solar</title>
+<meta name="description" content="Solicitudes, requerimientos funcionales y no funcionales, restricciones, atributos de calidad, historias de usuario y tablero Kanban de la estación solar portátil para emergencias (DSE 2026-2).">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;600;700&family=Public+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../estilo.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="../"><span class="dot"></span>Estación solar</a>
+    <nav>
+      <a href="../">Proyecto</a>
+      <a href="./" aria-current="page">Requerimientos</a>
+      <a href="https://app.kanbanchi.com/dashboard/5922080451592192-6139501359792128/d-6139501359792128">Kanban</a>
+      <a href="../simulacion/">Simulación 3D</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+<section class="hero">
+  <div class="eyebrow"><b>DSE 2026-2</b> · Clase 19 · Diseño de la solución</div>
+  <h1>Documento de requerimientos</h1>
+  <p class="lede">Sistema portátil inteligente de energía solar para emergencias. A partir del diagrama de bloques detallado se listan las solicitudes, los requerimientos funcionales y no funcionales, las restricciones, los atributos de calidad y las historias de usuario. El tablero Kanban sale de las historias.</p>
+  <p class="small muted">Equipo: Ivy Sofía González Varela · José Luis Ocoró Banguera · Miguel Ángel López Pinto (Scrum Master) · Álvaro Chaves Ladino. Versión 1.1 · 5 de noviembre de 2026.</p>
+  <div class="tw noprint" style="max-width:640px">
+    <table>
+      <tr><th>Sección</th><th>Códigos</th><th>Cant.</th></tr>
+      <tr><td><a href="#arquitectura">1. Diagrama de bloques detallado</a></td><td class="mono">—</td><td>2</td></tr>
+      <tr><td><a href="#usuarios">2. Usuarios</a></td><td class="mono">—</td><td>4</td></tr>
+      <tr><td><a href="#solicitudes">3. Solicitudes</a></td><td class="mono">SOL 001–024</td><td>24</td></tr>
+      <tr><td><a href="#funcionales">4. Requerimientos funcionales</a></td><td class="mono">REQ 001–015</td><td>15</td></tr>
+      <tr><td><a href="#no-funcionales">5. Requerimientos no funcionales</a></td><td class="mono">REQNF 001–006</td><td>6</td></tr>
+      <tr><td><a href="#restricciones">6. Restricciones</a></td><td class="mono">REST 001–009</td><td>9</td></tr>
+      <tr><td><a href="#calidad">7. Atributos de calidad</a></td><td class="mono">ATRI-CAL 001–008</td><td>8</td></tr>
+      <tr><td><a href="#historias">8. Historias de usuario</a></td><td class="mono">HU-001–030</td><td>30</td></tr>
+      <tr><td><a href="#kanban">9. Tablero Kanban</a></td><td class="mono">—</td><td>—</td></tr>
+    </table>
+  </div>
+  <p class="noprint"><a class="btn" href="requerimientos.pdf">Descargar PDF</a></p>
+</section>
+
+<!-- ================================================================ -->
+<h2 id="arquitectura" class="keep">1. Diagrama de bloques detallado</h2>
+<p>Es la arquitectura que acordó el equipo el 4 de noviembre de 2026. La <b>Raspberry Pi Zero 2 W</b> es el único cómputo: el STM32 salió del diseño. El panel es de 20 W en un seguidor de un eje, el agente usa la API de Gemini y una bocina le da voz. Como la Pi no tiene entradas analógicas ni salida de audio, se agregan un <b>ADS1115</b> y un <b>MAX98357A</b>. Son los dos diagramas que acordó el equipo: el de hardware (qué está conectado con qué y por dónde va la energía) y el de flujo de información (qué pasa con cada dato hasta que el panel se mueve, una carga se apaga o el agente habla).</p>
+<h3 class="keep">Hardware</h3>
+<div class="dgwrap">
+<svg class="dg" viewBox="0 0 1040 590" role="img" aria-label="Diagrama de hardware: el panel de 12 V y 20 W carga la batería a través del controlador y el fusible; el bus de 12 V alimenta tres relés y dos step-down; la Raspberry Pi Zero 2 W es el único cómputo: lee las LDR y el potenciómetro por un ADS1115, el INA226 por I²C y la temperatura por 1-Wire; mueve el servo, controla los relés, muestra en la LCD y habla por un amplificador I²S y una bocina; sale por WiFi hacia Gemini y el celular.">
+  <defs>
+    <marker id="h-ah" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="mk" d="M0,0 L10,5 L0,10 z"/></marker>
+    <marker id="h-ahp" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto-start-reverse"><path class="mk-p" d="M0,0 L10,5 L0,10 z"/></marker>
+    <marker id="h-ahc" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path class="mk-c" d="M0,0 L10,5 L0,10 z"/></marker>
+  </defs>
+  <rect class="bound" x="20" y="28" width="785" height="545" rx="8"/>
+  <text class="zl" x="34" y="47">DENTRO DEL DISPOSITIVO</text>
+  <text class="zl" x="840" y="232">FUERA DEL DISPOSITIVO</text>
+  <rect class="box" x="40" y="60" width="130" height="50" rx="4"/><text class="t" x="105" y="81">Panel 12 V</text><text class="s" x="105" y="98">20 W · 1 eje</text>
+  <rect class="box" x="200" y="60" width="140" height="50" rx="4"/><text class="t" x="270" y="81">Controlador de carga</text><text class="s" x="270" y="98">kit del curso</text>
+  <rect class="box" x="370" y="60" width="80" height="50" rx="4"/><text class="t" x="410" y="81">Fusible</text><text class="s" x="410" y="98">10 A</text>
+  <rect class="box" x="480" y="60" width="130" height="50" rx="4"/><text class="t" x="545" y="81">Batería AGM</text><text class="s" x="545" y="98">12 V · 7 Ah</text>
+  <rect class="box" x="640" y="60" width="130" height="50" rx="4"/><text class="t" x="705" y="81">INA226</text><text class="s" x="705" y="98">mide V e I del bus</text>
+  <line class="pw" x1="170" y1="85" x2="198" y2="85" marker-end="url(#h-ahp)"/>
+  <line class="pw" x1="340" y1="85" x2="368" y2="85" marker-end="url(#h-ahp)"/>
+  <line class="pw" x1="450" y1="85" x2="478" y2="85" marker-end="url(#h-ahp)"/>
+  <line class="pw" x1="610" y1="85" x2="638" y2="85" marker-end="url(#h-ahp)"/>
+  <line class="pw" x1="705" y1="110" x2="705" y2="165"/>
+  <line class="pw" x1="115" y1="165" x2="727" y2="165"/>
+  <text class="lb p" x="140" y="157">bus 12 V</text>
+  <line class="pw" x1="115" y1="165" x2="115" y2="193" marker-end="url(#h-ahp)"/>
+  <line class="pw" x1="285" y1="165" x2="285" y2="193" marker-end="url(#h-ahp)"/>
+  <line class="pw" x1="460" y1="165" x2="460" y2="193" marker-end="url(#h-ahp)"/>
+  <line class="pw" x1="610" y1="165" x2="610" y2="193" marker-end="url(#h-ahp)"/>
+  <line class="pw" x1="727" y1="165" x2="727" y2="193" marker-end="url(#h-ahp)"/>
+  <rect class="box" x="40" y="195" width="150" height="45" rx="4"/><text class="t" x="115" y="214">Relé 1</text><text class="s" x="115" y="230">lámpara LED 12 V</text>
+  <rect class="box" x="210" y="195" width="150" height="45" rx="4"/><text class="t" x="285" y="214">Relé 2</text><text class="s" x="285" y="230">USB QC 3.0 doble</text>
+  <rect class="box" x="380" y="195" width="160" height="45" rx="4"/><text class="t" x="460" y="214">Relé 3</text><text class="s" x="460" y="230">corte por bajo voltaje</text>
+  <rect class="box" x="560" y="195" width="100" height="45" rx="4"/><text class="t" x="610" y="214">Step-down</text><text class="s" x="610" y="230">5 V Pi y lógica</text>
+  <rect class="box" x="675" y="195" width="105" height="45" rx="4"/><text class="t" x="727" y="214">Step-down</text><text class="s" x="727" y="230">6 V servo</text>
+  <line class="pw" x1="595" y1="240" x2="595" y2="318" marker-end="url(#h-ahp)"/>
+  <text class="lb p" x="603" y="290">5 V</text>
+  <line class="sig" x1="420" y1="320" x2="420" y2="270"/>
+  <line class="sig" x1="115" y1="270" x2="460" y2="270"/>
+  <line class="sig" x1="115" y1="270" x2="115" y2="242" marker-end="url(#h-ah)"/>
+  <line class="sig" x1="285" y1="270" x2="285" y2="242" marker-end="url(#h-ah)"/>
+  <line class="sig" x1="460" y1="270" x2="460" y2="242" marker-end="url(#h-ah)"/>
+  <text class="lb" x="160" y="285">GPIO: 3 relés</text>
+  <polyline class="sig" points="550,320 550,135 670,135 670,112" marker-end="url(#h-ah)" marker-start="url(#h-ah)"/>
+  <text class="lb" x="520" y="300">I²C</text>
+  <rect class="box hub" x="370" y="320" width="240" height="120" rx="5"/>
+  <text class="t" x="490" y="354">Raspberry Pi Zero 2 W</text>
+  <text class="s" x="490" y="374">control · agente · voz · dashboard</text>
+  <text class="s" x="490" y="392">único cómputo, siempre encendida</text>
+  <text class="s" x="490" y="410">~1 W promedio con WiFi</text>
+  <rect class="box" x="40" y="320" width="140" height="40" rx="3"/><text class="s f" x="110" y="337">2 LDR este / oeste</text><text class="s" x="110" y="352">+ potenciómetro del eje</text>
+  <rect class="box new" x="210" y="320" width="120" height="40" rx="3"/><text class="t" x="270" y="337">ADS1115</text><text class="s" x="270" y="352">ADC de 4 canales</text>
+  <line class="sig" x1="180" y1="340" x2="208" y2="340" marker-end="url(#h-ah)"/>
+  <line class="sig" x1="330" y1="340" x2="368" y2="340" marker-end="url(#h-ah)"/><text class="lb" x="349" y="334" text-anchor="middle">I²C</text>
+  <rect class="box" x="210" y="372" width="120" height="26" rx="3"/><text class="s f" x="270" y="389">3 interruptores</text>
+  <line class="sig" x1="330" y1="385" x2="368" y2="385" marker-end="url(#h-ah)"/><text class="lb" x="349" y="380" text-anchor="middle">GPIO</text>
+  <rect class="box" x="210" y="406" width="120" height="26" rx="3"/><text class="s f" x="270" y="423">DS18B20 temp.</text>
+  <line class="sig" x1="330" y1="419" x2="368" y2="419" marker-end="url(#h-ah)"/><text class="lb" x="349" y="414" text-anchor="middle">1-Wire</text>
+  <rect class="box" x="220" y="500" width="130" height="45" rx="4"/><text class="t" x="285" y="519">Pantalla LCD</text><text class="s" x="285" y="535">estado local</text>
+  <polyline class="sig" points="425,440 425,482 285,482 285,498" marker-end="url(#h-ah)"/>
+  <text class="lb" x="295" y="494">I²C</text>
+  <rect class="box" x="400" y="500" width="130" height="45" rx="4"/><text class="t" x="465" y="519">Servo MG996R</text><text class="s" x="465" y="535">eje único · 6 V</text>
+  <line class="sig" x1="480" y1="440" x2="480" y2="498" marker-end="url(#h-ah)"/>
+  <text class="lb" x="488" y="474">PWM</text>
+  <rect class="box new" x="550" y="500" width="130" height="45" rx="4"/><text class="t" x="615" y="519">Amplificador I²S</text><text class="s" x="615" y="535">p. ej. MAX98357A</text>
+  <line class="sig" x1="590" y1="440" x2="590" y2="498" marker-end="url(#h-ah)"/>
+  <text class="lb" x="598" y="474">I²S</text>
+  <rect class="box new" x="710" y="500" width="85" height="45" rx="4"/><text class="t" x="752" y="519">Bocina</text><text class="s" x="752" y="535">3 W · 4 Ω</text>
+  <line class="sig" x1="680" y1="522" x2="708" y2="522" marker-end="url(#h-ah)"/>
+  <rect class="box cloud" x="840" y="250" width="180" height="50" rx="4"/><text class="t" x="930" y="271">Gemini API</text><text class="s" x="930" y="288">decide · texto para voz</text>
+  <rect class="box" x="840" y="380" width="180" height="50" rx="4"/><text class="t" x="930" y="401">Router o hotspot</text><text class="s" x="930" y="418">del celular</text>
+  <rect class="box" x="840" y="480" width="180" height="50" rx="4"/><text class="t" x="930" y="501">Celular del usuario</text><text class="s" x="930" y="518">dashboard web</text>
+  <line class="wl" x1="610" y1="405" x2="838" y2="405" marker-end="url(#h-ahc)" marker-start="url(#h-ahc)"/>
+  <text class="lb c" x="720" y="398" text-anchor="middle">WiFi</text>
+  <line class="wl" x1="930" y1="380" x2="930" y2="302" marker-end="url(#h-ahc)" marker-start="url(#h-ahc)"/>
+  <text class="lb c" x="940" y="345">HTTPS · internet</text>
+  <line class="wl" x1="930" y1="430" x2="930" y2="478" marker-end="url(#h-ahc)" marker-start="url(#h-ahc)"/>
+  <text class="lb c" x="940" y="459">WiFi local</text>
+</svg>
+</div>
+<div class="dglegend" aria-hidden="true"><span><i></i>potencia</span><span><i class="sig"></i>señal o bus</span><span><i class="wl"></i>inalámbrico, depende de la red</span><span>borde ámbar = bloque nuevo frente al BOM</span></div>
+<p class="small muted">La energía baja de arriba hacia abajo. La Pi es el único cómputo: todo sensor y todo actuador pasa por ella, y Gemini queda fuera de la caja. Para simplificar, el relé 3 está dibujado como una carga más; en el esquemático va en serie entre el bus y las cargas, que salen por la salida de carga del controlador (primer nivel de corte, REQ 006).</p>
+
+<h3 class="keep">Flujo de información</h3>
+<div class="dgwrap">
+<svg class="dg" viewBox="0 0 1040 560" role="img" aria-label="Diagrama de flujo de información en cuatro franjas, todo en la Raspberry Pi salvo Gemini: un servicio de control cierra el lazo de sensores, seguimiento, protecciones y actuadores cada 1 a 2 segundos; el agente arma un resumen con el estado, consulta a Gemini o usa reglas sin red, y un validador local entrega el modo y las consignas al control; los avisos salen por la bocina y el dashboard.">
+  <defs>
+    <marker id="f-ah" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="mk" d="M0,0 L10,5 L0,10 z"/></marker>
+    <marker id="f-ahc" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path class="mk-c" d="M0,0 L10,5 L0,10 z"/></marker>
+  </defs>
+  <rect class="z1" x="10" y="28" width="1020" height="112" rx="6"/>
+  <rect class="z2" x="10" y="158" width="1020" height="132" rx="6"/>
+  <rect class="z3" x="10" y="308" width="1020" height="114" rx="6"/>
+  <rect class="z4" x="10" y="440" width="1020" height="110" rx="6"/>
+  <text class="zl" x="24" y="46">RASPBERRY PI · SERVICIO DE CONTROL · CADA 1–2 s · SIEMPRE ACTIVO</text>
+  <text class="zl" x="24" y="176">RASPBERRY PI · AGENTE</text>
+  <text class="zl" x="24" y="326">NUBE · CADA 5–15 min · SOLO CON INTERNET</text>
+  <text class="zl" x="24" y="458">USUARIO</text>
+  <rect class="box" x="30" y="62" width="150" height="50" rx="4"/><text class="t" x="105" y="83">Sensores</text><text class="s" x="105" y="100">ADS1115, INA226, temp.</text>
+  <rect class="box" x="240" y="62" width="150" height="50" rx="4"/><text class="t" x="315" y="83">Adquisición</text><text class="s" x="315" y="100">filtro y validación</text>
+  <rect class="box" x="450" y="62" width="150" height="50" rx="4"/><text class="t" x="525" y="83">Seguimiento del sol</text><text class="s" x="525" y="100">E/O + histéresis</text>
+  <rect class="box hub" x="660" y="62" width="150" height="50" rx="4"/><text class="t" x="735" y="83">Protecciones</text><text class="s" x="735" y="100">bajo voltaje · límites</text>
+  <rect class="box" x="870" y="62" width="150" height="50" rx="4"/><text class="t" x="945" y="83">Actuadores</text><text class="s" x="945" y="100">servo · 3 relés</text>
+  <line class="sig" x1="180" y1="87" x2="238" y2="87" marker-end="url(#f-ah)"/>
+  <line class="sig" x1="390" y1="87" x2="448" y2="87" marker-end="url(#f-ah)"/>
+  <line class="sig" x1="600" y1="87" x2="658" y2="87" marker-end="url(#f-ah)"/>
+  <line class="sig" x1="810" y1="87" x2="868" y2="87" marker-end="url(#f-ah)"/>
+  <text class="lb" x="629" y="80" text-anchor="middle">ángulo</text>
+  <text class="lb" x="839" y="80" text-anchor="middle">PWM, GPIO</text>
+  <line class="sig" x1="315" y1="112" x2="315" y2="203" marker-end="url(#f-ah)"/>
+  <text class="lb" x="325" y="150">estado cada 1 s</text>
+  <rect class="box" x="240" y="205" width="150" height="55" rx="4"/><text class="t" x="315" y="228">Estado del sistema</text><text class="s" x="315" y="245">lecturas + historial</text>
+  <rect class="box hub" x="450" y="205" width="150" height="55" rx="4"/><text class="t" x="525" y="228">Agente</text><text class="s" x="525" y="245">arma el resumen</text>
+  <rect class="box hub" x="660" y="205" width="150" height="55" rx="4"/><text class="t" x="735" y="228">Validador local</text><text class="s" x="735" y="245">rangos y modos válidos</text>
+  <rect class="box" x="870" y="205" width="150" height="55" rx="4"/><text class="t" x="945" y="228">Avisos y registro</text><text class="s" x="945" y="245">mensaje · log · motivo</text>
+  <line class="sig" x1="390" y1="232" x2="448" y2="232" marker-end="url(#f-ah)"/>
+  <line class="sig" x1="600" y1="240" x2="658" y2="240" marker-end="url(#f-ah)"/>
+  <text class="lb" x="629" y="232" text-anchor="middle">sin red:</text>
+  <text class="lb" x="629" y="256" text-anchor="middle">reglas</text>
+  <line class="sig" x1="810" y1="232" x2="868" y2="232" marker-end="url(#f-ah)"/>
+  <line class="sig" x1="735" y1="205" x2="735" y2="114" marker-end="url(#f-ah)"/>
+  <text class="lb" x="745" y="150">modo y consignas</text>
+  <line class="wl" x1="505" y1="260" x2="505" y2="343" marker-end="url(#f-ahc)"/>
+  <text class="lb c" x="497" y="305" text-anchor="end">HTTPS · resumen</text>
+  <rect class="box cloud" x="450" y="345" width="150" height="55" rx="4"/><text class="t" x="525" y="368">Gemini API</text><text class="s" x="525" y="385">JSON + texto a decir</text>
+  <polyline class="wl" points="600,372 735,372 735,262" marker-end="url(#f-ahc)"/>
+  <text class="lb c" x="612" y="364">decisión en JSON</text>
+  <polyline class="sig" points="900,260 900,470 735,470 735,483" marker-end="url(#f-ah)"/>
+  <text class="lb" x="890" y="465" text-anchor="end">voz (TTS)</text>
+  <rect class="box" x="660" y="485" width="150" height="50" rx="4"/><text class="t" x="735" y="506">Bocina</text><text class="s" x="735" y="522">el agente habla</text>
+  <line class="sig" x1="970" y1="260" x2="970" y2="483" marker-end="url(#f-ah)"/>
+  <text class="lb" x="978" y="400">WiFi</text>
+  <rect class="box" x="880" y="485" width="140" height="50" rx="4"/><text class="t" x="950" y="506">Celular y LCD</text><text class="s" x="950" y="522">dashboard · alertas</text>
+</svg>
+</div>
+<div class="dglegend" aria-hidden="true"><span><i class="sig"></i>siempre disponible</span><span><i class="wl"></i>solo con internet</span></div>
+<p class="small muted">Todo corre en la Pi como dos programas separados. El servicio de control mueve el panel y protege la batería, y no espera a nadie. El agente decide la estrategia, y lo que devuelve Gemini pasa por el validador antes de llegar al control.</p>
+
+
+<div class="tw">
+<table>
+  <tr><th>Bloque</th><th>Interfaz</th><th>Función</th></tr>
+  <tr><td>2 LDR + potenciómetro → ADS1115 → Pi</td><td class="mono">Analógica → I²C</td><td>Error este-oeste del seguidor y ángulo real del eje</td></tr>
+  <tr><td>INA226 → Pi</td><td class="mono">I²C</td><td>Voltaje y corriente de la batería: energía que entra y sale, estado de carga</td></tr>
+  <tr><td>Pi → LCD</td><td class="mono">I²C</td><td>Voltaje de la batería, cargas encendidas y modo</td></tr>
+  <tr><td>DS18B20 → Pi</td><td class="mono">1-Wire</td><td>Temperatura de la batería (resistencia de 4,7 kΩ)</td></tr>
+  <tr><td>Interruptores ×3 → Pi</td><td class="mono">GPIO</td><td>Luz, USB y voz (hablar o callar)</td></tr>
+  <tr><td>Pi → relés ×3</td><td class="mono">GPIO 3,3 V</td><td>Lámpara, USB y corte por bajo voltaje (nivel 2)</td></tr>
+  <tr><td>Pi → servo MG996R</td><td class="mono">PWM · GPIO 12</td><td>Giro este-oeste del panel</td></tr>
+  <tr><td>Pi → MAX98357A → bocina</td><td class="mono">I²S · GPIO 18/19/21</td><td>Avisos hablados del agente</td></tr>
+  <tr><td>Pi ↔ router u hotspot</td><td class="mono">Wi-Fi</td><td>Dashboard en el celular (HTTP local) y API de Gemini (HTTPS) si hay internet</td></tr>
+</table>
+</div>
+
+<!-- ================================================================ -->
+<h2 id="usuarios" class="keep">2. Usuarios del sistema</h2>
+<div class="tw">
+<table>
+  <tr><th>Rol</th><th>Quién es</th><th>Qué necesita</th></tr>
+  <tr><td><b>Vecino</b></td><td>Persona de la comunidad durante un apagón, sin capacitación</td><td>Luz y carga del celular; saber de un vistazo o de oído si hay energía</td></tr>
+  <tr><td><b>Encargado</b></td><td>Líder comunitario, brigadista o docente a cargo de la estación</td><td>Decidir qué cargas atender, ver el estado desde el celular, configurar horarios</td></tr>
+  <tr><td><b>Mantenedor</b></td><td>Técnico (el equipo, en el curso)</td><td>Instalar, calibrar, descargar registros, actualizar el software, diagnosticar fallas</td></tr>
+  <tr><td><b>Agente</b></td><td>Servicio en la Pi que consulta a Gemini (no es persona)</td><td>Un resumen del estado para proponer el modo, las prioridades de carga y qué decir</td></tr>
+</table>
+</div>
+
+<!-- ================================================================ -->
+<h2 id="solicitudes" class="keep">3. Solicitudes</h2>
+<p>Las solicitudes vienen de la propuesta del equipo (<i>Sistema Portátil Inteligente de Energía Solar para Emergencias</i>), de las indicaciones del profesor en clase y de las discusiones del equipo, la última el 4 de noviembre. La columna <b>Origen</b> indica de dónde salió cada una.</p>
+<div class="tw">
+<table>
+  <tr><th>Id</th><th>Nombre</th><th>Descripción</th><th>Origen</th></tr>
+  <tr><td class="id">SOL 001</td><td>Luz en un apagón</td><td>Tener iluminación de noche cuando se va la energía de la red.</td><td>Propuesta</td></tr>
+  <tr><td class="id">SOL 002</td><td>Carga de celulares</td><td>Cargar celulares por USB para mantener la comunicación en la emergencia.</td><td>Propuesta</td></tr>
+  <tr><td class="id">SOL 003</td><td>Recarga sin red</td><td>Recargar la batería solo con el sol, sin depender de la red ni de combustible.</td><td>Propuesta</td></tr>
+  <tr><td class="id">SOL 004</td><td>Seguir al sol</td><td>Orientar el panel hacia el sol para aprovecharlo mejor que un panel fijo.</td><td>Propuesta / profesor</td></tr>
+  <tr><td class="id">SOL 005</td><td>Cuidar la batería</td><td>No dañar la batería por descargarla de más ni por temperatura.</td><td>Equipo</td></tr>
+  <tr><td class="id">SOL 006</td><td>Ver el estado sin herramientas</td><td>Saber cuánta energía queda y si se está cargando sin usar multímetro ni computador.</td><td>Propuesta</td></tr>
+  <tr><td class="id">SOL 007</td><td>Control manual</td><td>Poder prender o apagar la luz y el USB a mano, aunque falle la parte inteligente.</td><td>Equipo</td></tr>
+  <tr><td class="id">SOL 008</td><td>Agente inteligente</td><td>Un agente que razone sobre la energía y decida la estrategia. El equipo eligió Gemini.</td><td>Profesor / equipo</td></tr>
+  <tr><td class="id">SOL 009</td><td>Consulta desde el celular</td><td>Ver el estado y las recomendaciones desde un celular cercano.</td><td>Propuesta</td></tr>
+  <tr><td class="id">SOL 010</td><td>Registro de datos</td><td>Guardar voltaje, corriente, temperatura y posición para analizarlos después.</td><td>Profesor</td></tr>
+  <tr><td class="id">SOL 011</td><td>¿Alcanza para la noche?</td><td>Saber, antes de aceptar más cargas, si la energía alcanza para la luz de la noche.</td><td>Equipo</td></tr>
+  <tr><td class="id">SOL 012</td><td>Portátil</td><td>Que una persona lo pueda llevar e instalar en otro sitio.</td><td>Propuesta</td></tr>
+  <tr><td class="id">SOL 013</td><td>Presupuesto</td><td>No pasar de $200.000 COP en materiales.</td><td>Profesor</td></tr>
+  <tr><td class="id">SOL 014</td><td>Plataforma del curso</td><td>Usar la tarjeta de desarrollo que entrega el curso: la Raspberry Pi Zero 2 W.</td><td>Profesor</td></tr>
+  <tr><td class="id">SOL 015</td><td>Intemperie</td><td>Funcionar al aire libre: sol, lluvia y polvo.</td><td>Propuesta</td></tr>
+  <tr><td class="id">SOL 016</td><td>Seguro para cualquiera</td><td>Que nadie se electrocute ni se queme al usarlo, incluso sin experiencia.</td><td>Equipo</td></tr>
+  <tr><td class="id">SOL 017</td><td>Temperatura de la batería</td><td>Vigilar la temperatura de la batería.</td><td>Propuesta</td></tr>
+  <tr><td class="id">SOL 018</td><td>Probar que el seguidor sirve</td><td>Medir cuánto gana el seguidor frente al mismo panel fijo.</td><td>Equipo</td></tr>
+  <tr><td class="id">SOL 019</td><td>Bajo consumo propio</td><td>Que el sistema no se gaste en sí mismo la energía que debe entregar.</td><td>Equipo</td></tr>
+  <tr><td class="id">SOL 020</td><td>Simulación 3D</td><td>Poder mostrar el sistema en varias situaciones en una simulación navegable.</td><td>Profesor</td></tr>
+  <tr><td class="id">SOL 021</td><td>Software abierto</td><td>Usar herramientas y bibliotecas libres, sin licencias pagas.</td><td>Equipo</td></tr>
+  <tr><td class="id">SOL 022</td><td>Reparable</td><td>Que se pueda reparar con piezas que se consiguen en Colombia.</td><td>Equipo</td></tr>
+  <tr><td class="id">SOL 023</td><td>Avisos por voz</td><td>Que la estación avise hablando cuando pase algo importante, sin tener que mirar una pantalla.</td><td>Equipo</td></tr>
+  <tr><td class="id">SOL 024</td><td>Proteger la clave de la API</td><td>Que la clave de Gemini no quede publicada, porque el sitio sale de un repositorio público.</td><td>Equipo</td></tr>
+</table>
+</div>
+
+<!-- ================================================================ -->
+<h2 id="funcionales" class="pb">4. Requerimientos funcionales</h2>
+<p>Un requerimiento funcional es un comportamiento del sistema que el usuario puede ver. La <b>importancia</b> ordena el desarrollo: primero va lo que protege la batería y a las personas.</p>
+
+<div class="ficha k-func"><div class="fh"><span class="code">REQ 001</span><span class="name">Carga solar de la batería</span><span class="tag t-alta">ALTA</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>El sistema carga la batería AGM de 12 V con el panel de 20 W a través del controlador PWM del kit, y reporta si está cargando.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>El controlador del kit se configura con el perfil AGM.</li>
+    <li>Hay carga cuando la corriente neta de la batería, medida por el INA226, es positiva.</li>
+    <li>El fusible de 10 A va lo más cerca posible del borne positivo.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Tener energía disponible sin red eléctrica.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 003 · SOL 005</span></div>
+</div>
+
+<div class="ficha k-func"><div class="fh"><span class="code">REQ 002</span><span class="name">Seguimiento solar en un eje</span><span class="tag t-media">MEDIA</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>El servicio de control gira el panel de este a oeste con 2 LDR, un potenciómetro en el eje y un servo MG996R.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>Las 2 LDR (este y oeste) son el lazo principal, porque funcionan sin red. Se leen con el ADS1115.</li>
+    <li>El potenciómetro confirma el ángulo real del eje: comprueba que el servo llegó a la posición pedida.</li>
+    <li>Con la hora y la ubicación fija, la Pi calcula la posición del sol. Así deja el panel mirando al este durante la noche y detecta una LDR dañada cuando su lectura no cuadra con el cálculo.</li>
+    <li>Filtro de primer orden, banda muerta y rampa para no perseguir el ruido de las nubes. Límites del eje por software.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Generar más energía que el mismo panel fijo. Un eje este-oeste captura la mayor parte de la ganancia con un solo servo.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 004 · SOL 019</span></div>
+</div>
+
+<div class="ficha k-func"><div class="fh"><span class="code">REQ 003</span><span class="name">Medición del estado de energía</span><span class="tag t-alta">ALTA</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>La Pi mide el voltaje y la corriente de la batería (INA226) y su temperatura (DS18B20), y estima el estado de carga (SoC).</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>Muestreo de V e I en cada ciclo del control, cada 1–2 s.</li>
+    <li>El SoC se estima contando la carga (Ah) y se corrige con el voltaje en reposo cuando la corriente es casi cero.</li>
+    <li>Da alarma si la temperatura de la batería sale del rango de la hoja de datos del fabricante.</li>
+    <li>Mide también el consumo de la propia Pi, para cerrar el balance de energía.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Tener los datos que necesitan la protección, la pantalla y el agente.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 005 · SOL 006 · SOL 017 · SOL 019</span></div>
+</div>
+
+<div class="ficha k-func"><div class="fh"><span class="code">REQ 004</span><span class="name">Salida de iluminación de 12 V</span><span class="tag t-alta">ALTA</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>La lámpara LED de 12 V se enciende con el relé 1, según el interruptor 1, el horario o la prioridad que fije el agente.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>Horario por defecto de 18:00 a 22:00, configurable.</li>
+    <li>Queda detrás de los dos niveles de corte por bajo voltaje.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Dar luz en la noche de un apagón.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 001 · SOL 007</span></div>
+</div>
+
+<div class="ficha k-func"><div class="fh"><span class="code">REQ 005</span><span class="name">Salida de carga USB</span><span class="tag t-alta">ALTA</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>El módulo USB QC 3.0 de dos puertos se habilita con el relé 2, según el interruptor 2 o la prioridad de carga.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>Dos celulares a la vez como máximo (24 W del módulo).</li>
+    <li>Queda detrás de los dos niveles de corte, igual que la lámpara.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Mantener comunicados a los vecinos.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 002 · SOL 007</span></div>
+</div>
+
+<div class="ficha k-func"><div class="fh"><span class="code">REQ 006</span><span class="name">Corte por bajo voltaje en dos niveles</span><span class="tag t-alta">ALTA</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>Las cargas se cortan cuando la batería baja, sin que la protección dependa solo de la Pi.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li><b>Nivel 1:</b> las cargas van en la salida de carga del controlador, que trae su propio corte por bajo voltaje. Hay que confirmar que el controlador del kit la tiene; si no, hace falta un módulo de corte independiente de la Pi.</li>
+    <li><b>Nivel 2:</b> el servicio de control abre el relé 3 si V &lt; 11,8 V durante 10 s seguidos, y lo cierra cuando el voltaje en reposo estimado (V − I·R<sub>int</sub>) llega a 12,4 V.</li>
+    <li>Ni el agente, ni el dashboard, ni los interruptores pueden saltarse el corte.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>No dañar la AGM por descarga profunda.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 005 · SOL 016</span></div>
+</div>
+
+<div class="ficha k-func"><div class="fh"><span class="code">REQ 007</span><span class="name">Pantalla local</span><span class="tag t-media">MEDIA</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>La LCD muestra el estado sin necesidad de celular.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>Línea 1: voltaje de la batería, SoC en % y si carga o descarga.</li>
+    <li>Línea 2: cargas encendidas, corte activo o modo actual («AHORRO», «NORMAL», «SIN RED»).</li>
+    <li>La actualiza el servicio de control, así que funciona aunque el agente falle.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Que cualquiera entienda el estado de un vistazo.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 006 · SOL 011</span></div>
+</div>
+
+<div class="ficha k-func"><div class="fh"><span class="code">REQ 008</span><span class="name">Servicio de control independiente</span><span class="tag t-alta">ALTA</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>Un servicio de systemd lee los sensores, sigue el sol, aplica las protecciones y mueve el servo y los relés cada 1–2 s, separado del agente.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>No depende de la red ni del agente. Arranca solo al encender la Pi.</li>
+    <li>systemd lo reinicia si se cae. El watchdog por hardware de la Pi reinicia la tarjeta si el sistema se cuelga.</li>
+    <li>Es el único proceso que escribe en los GPIO de los relés y del servo.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Que la seguridad no dependa de la red ni del software del agente.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 005 · SOL 014 · SOL 016</span></div>
+</div>
+
+<div class="ficha k-func"><div class="fh"><span class="code">REQ 009</span><span class="name">Agente con Gemini</span><span class="tag t-media">MEDIA</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>El servicio del agente arma un resumen del estado, se lo envía a la API de Gemini y recibe en JSON el modo, las prioridades de carga y un texto para decir.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>Consulta cada 15 min de día y además por eventos: batería baja, caída de producción o cambio de carga. De noche espacia las consultas.</li>
+    <li>El resumen lleva SoC, corriente, temperatura, hora, cargas activas e historial reciente. No lleva datos personales.</li>
+    <li>Sin red, o si Gemini no responde a tiempo, decide con reglas locales.</li>
+    <li>Responde la pregunta de la noche: si la energía alcanza para la lámpara antes de aceptar otro celular.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Repartir la energía para que alcance para la luz de la noche.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 008 · SOL 011</span></div>
+</div>
+
+<div class="ficha k-func"><div class="fh"><span class="code">REQ 010</span><span class="name">Dashboard web local</span><span class="tag t-media">MEDIA</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>La Pi sirve una página con el estado, la recomendación del agente y la configuración. Se abre desde un celular en la misma red.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>La Pi se conecta a un router o al hotspot del celular del encargado. El hotspot sirve aunque el celular no tenga datos.</li>
+    <li>La consulta es libre dentro de la red. Para cambiar la configuración hace falta el PIN del encargado.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Ver y operar la estación desde el celular.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 009 · SOL 006</span></div>
+</div>
+
+<div class="ficha k-func"><div class="fh"><span class="code">REQ 011</span><span class="name">Registro de datos</span><span class="tag t-media">MEDIA</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>La Pi guarda en la microSD V, I, SoC, temperatura, ángulo del panel, estado de las salidas y decisiones.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>Resúmenes por minuto en CSV, escritos en bloques para no gastar la microSD.</li>
+    <li>El CSV se descarga desde el dashboard.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Tener datos reales para las pruebas, la ganancia del seguidor y el balance de energía.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 010 · SOL 018</span></div>
+</div>
+
+<div class="ficha k-func"><div class="fh"><span class="code">REQ 012</span><span class="name">Validador local de decisiones</span><span class="tag t-alta">ALTA</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>Antes de pasarle una respuesta de Gemini al control, un validador local la revisa y rechaza lo que esté mal formado o fuera de rango.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>Revisa el esquema del JSON, los valores permitidos de modo y prioridad, y que la orden no viole el corte por bajo voltaje ni los límites del eje.</li>
+    <li>Gemini nunca mueve el servo ni los relés directamente: propone, y el control ejecuta lo validado.</li>
+    <li>Cada rechazo queda registrado con la respuesta original. El agente pasa a reglas locales.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Gemini decide la estrategia y el control garantiza la seguridad.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 008 · SOL 016</span></div>
+</div>
+
+<div class="ficha k-func"><div class="fh"><span class="code">REQ 013</span><span class="name">Anulación manual</span><span class="tag t-alta">ALTA</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>Los interruptores del frente mandan sobre el agente y el dashboard. El corte por bajo voltaje manda sobre todo.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>Prioridad: corte &gt; interruptor manual &gt; encargado (dashboard) &gt; agente.</li>
+    <li>Interruptor 1: luz. Interruptor 2: USB. Interruptor 3: le pide al agente que hable o que se calle.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Que la estación se pueda usar aunque falle la parte inteligente.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 007 · SOL 016</span></div>
+</div>
+
+<div class="ficha k-func"><div class="fh"><span class="code">REQ 014</span><span class="name">Ensayo de ganancia del seguidor</span><span class="tag t-baja">BAJA</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>Un modo de ensayo compara la corriente de carga con seguimiento y con el panel fijo, en la misma franja horaria.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>Alterna bloques con seguimiento y bloques con el eje fijo en la posición del mediodía, con las cargas apagadas.</li>
+    <li>Reporta la energía de cada modo (Wh) y la ganancia en %.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Comprobar con datos si el seguidor vale lo que cuesta.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 018 · SOL 004</span></div>
+</div>
+
+<div class="ficha k-func"><div class="fh"><span class="code">REQ 015</span><span class="name">Avisos por voz</span><span class="tag t-baja">BAJA</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>La estación habla por la bocina (MAX98357A por I²S) cuando pasa algo importante.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>Habla solo en eventos: batería baja, cargas cortadas o cambio de modo. También cuando alguien pulsa el interruptor de voz.</li>
+    <li>Volumen fijo y modo silencio.</li>
+    <li>Con red, el texto viene de Gemini. Sin red, un sintetizador local (Piper o espeak) dice mensajes fijos.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Avisar a quien no está mirando la pantalla.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 023 · SOL 006</span></div>
+</div>
+
+<!-- ================================================================ -->
+<h2 id="no-funcionales" class="keep">5. Requerimientos no funcionales</h2>
+<p>Fijan cómo se evalúa la operación del sistema y no son directamente visibles para el usuario. Los valores marcados <span class="tag t-info">META</span> son metas de diseño que se validan en las pruebas.</p>
+
+<div class="ficha k-nf"><div class="fh"><span class="code">REQNF 001</span><span class="name">Autonomía y balance de energía</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>Con la batería llena y sin sol, el sistema da una noche de luz y mantiene la Pi encendida.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>La batería tiene 84 Wh nominales; quedan unos 40 Wh útiles si no se descarga por debajo del 50 %. El panel da 60–80 Wh/día con ~4 h de sol pico, antes de pérdidas.</li>
+    <li>La Pi siempre encendida con Wi-Fi gasta unos 24 Wh/día, cerca de un tercio de lo que produce el panel.</li>
+    <li><span class="tag t-info">META</span> 4 h de lámpara (18–22 h) y la Pi encendida toda la noche sin que actúe el corte. Los celulares se atienden según lo que diga el agente.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Cubrir la noche de un apagón. Las cifras son estimaciones, y el balance se cierra midiendo con el INA226.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 001 · SOL 002 · SOL 019</span></div>
+</div>
+
+<div class="ficha k-nf"><div class="fh"><span class="code">REQNF 002</span><span class="name">Consumo propio</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>La electrónica de control gasta poco frente a lo que genera el panel.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li><span class="tag t-info">META</span> ≤ 1,2 W promedio en total (Pi, ADS1115, LCD y relés en reposo), medido a 12 V con el servo quieto.</li>
+    <li>Modo de ahorro: espacia las consultas a Gemini y apaga el Wi-Fi de noche. El servo solo consume mientras se mueve.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Que la energía llegue a las cargas.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 019</span></div>
+</div>
+
+<div class="ficha k-nf"><div class="fh"><span class="code">REQNF 003</span><span class="name">Tiempos de respuesta</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>Las funciones de protección y de interfaz responden en tiempos acotados.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>Corte de nivel 2: abre a los 10 s ± 2 s de estar por debajo de 11,8 V.</li>
+    <li><span class="tag t-info">META</span> Interruptor → relé en ≤ 300 ms (interrupción por flanco en el GPIO, sin esperar el ciclo). LCD actualizada cada ≤ 2 s.</li>
+    <li><span class="tag t-info">META</span> Gemini con 20 s de tiempo máximo de espera; después decide con reglas locales. Servicio de control activo ≤ 60 s después de encender.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Que la protección y la operación manual sean predecibles.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 005 · SOL 007</span></div>
+</div>
+
+<div class="ficha k-nf"><div class="fh"><span class="code">REQNF 004</span><span class="name">Exactitud de medición</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>Las mediciones de energía son lo bastante exactas para decidir el corte y estimar el SoC.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li><span class="tag t-info">META</span> Voltaje con error ≤ 1 % y corriente con error ≤ 2 % frente a un multímetro del laboratorio.</li>
+    <li><span class="tag t-info">META</span> SoC con error ≤ 10 puntos frente al voltaje en reposo después de 2 h sin carga. Ángulo del eje con error ≤ 3° frente a un transportador.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Un error de 0,1 V ya mueve el umbral del corte.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 005 · SOL 006</span></div>
+</div>
+
+<div class="ficha k-nf"><div class="fh"><span class="code">REQNF 005</span><span class="name">Operación sin internet</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>Todo lo esencial funciona sin internet. Lo único que se pierde es Gemini.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>Sin red siguen funcionando el control, las protecciones, la LCD, la voz (Piper o espeak), el registro y el dashboard por el hotspot. El agente pasa a reglas locales.</li>
+    <li>La Pi no tiene reloj con batería (RTC): sin red pierde la hora al reiniciarse. El encargado la ajusta desde el dashboard. Agregar un RTC es un punto abierto.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>En una emergencia real se asume que no hay internet.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 008 · SOL 009</span></div>
+</div>
+
+<div class="ficha k-nf"><div class="fh"><span class="code">REQNF 006</span><span class="name">Portabilidad física</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>Una sola persona transporta e instala la estación.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>Caja de control de 306 × 176 × 121 mm; la batería sola pesa ≈ 2 kg.</li>
+    <li><span class="tag t-info">META</span> Masa total ≤ 8 kg. Armado del seguidor en ≤ 15 min sin herramientas especiales.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Llevarla a donde está la emergencia.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 012</span></div>
+</div>
+
+<!-- ================================================================ -->
+<h2 id="restricciones" class="keep">6. Restricciones</h2>
+<p>Reglas técnicas que el desarrollo debe cumplir. Dentro del curso no se negocian.</p>
+
+<div class="ficha k-rest"><div class="fh"><span class="code">REST 001</span><span class="name">Presupuesto máximo</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>Los materiales comprados no pasan de $200.000 COP.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>Con lo ya cotizado, el total baja de $197.080 a $181.990. Quedan $18.010 para el potenciómetro, el MAX98357A y la bocina, que faltan por cotizar.</li>
+    <li>Cables, bornes, tornillería y carcasa salen del laboratorio, se reutilizan o se pagan con el margen.</li>
+    <li>Si el kit del curso trae batería, se elimina la AGM del BOM (−$58.840).</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Cumplir el tope que fijó el profesor.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 013</span></div>
+</div>
+
+<div class="ficha k-rest"><div class="fh"><span class="code">REST 002</span><span class="name">Raspberry Pi Zero 2 W como único cómputo</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>La tarjeta que entrega el curso hace todo: control, agente, voz y dashboard.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>Sin entradas analógicas: se usa el ADS1115. Sin salida de audio: se usa el MAX98357A.</li>
+    <li>Sin NPU: el razonamiento pesado lo hace Gemini, y en la Pi solo corren reglas.</li>
+    <li>Siempre encendida: su consumo entra al balance de energía (REQNF 001).</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Un solo procesador simplifica el hardware y el software.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 014</span></div>
+</div>
+
+<div class="ficha k-rest"><div class="fh"><span class="code">REST 003</span><span class="name">Solo corriente continua</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>Las salidas son 12 V DC y USB. No hay inversor de 120 V AC.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>Ningún inversor cabe en el presupuesto.</li>
+    <li>Así se evita el riesgo de choque eléctrico y el puerto AC en los ensayos de EMC.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Seguridad y presupuesto.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 013 · SOL 016</span></div>
+</div>
+
+<div class="ficha k-rest"><div class="fh"><span class="code">REST 004</span><span class="name">Batería AGM y un panel de 20 W</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>La batería es una AGM de 12 V 7 Ah y se carga con un solo panel de 20 W.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>El panel da ~1,1 A, dentro de lo que suele aceptar la AGM de 7 Ah (~2,1 A; se confirma en su etiqueta).</li>
+    <li>Si el kit trae una batería de litio o un controlador MPPT, cambian el perfil de carga y la protección (BMS).</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Cargar sin dañar la batería.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 003 · SOL 005</span></div>
+</div>
+
+<div class="ficha k-rest"><div class="fh"><span class="code">REST 005</span><span class="name">Protección y alimentación separadas</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>Toda la energía de la batería pasa por un fusible de 10 A, y el servo tiene su propia fuente.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>Una AGM puede entregar cientos de amperios en cortocircuito.</li>
+    <li>Step-down de 6 V de ≥ 3 A solo para el servo (picos de ~2,5 A), y de 5 V de ≥ 2 A para la Pi y la lógica.</li>
+    <li>El módulo de relés acepta señal de 3,3 V.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Evitar incendios, y que los picos del servo no reinicien la Pi.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 016</span></div>
+</div>
+
+<div class="ficha k-rest"><div class="fh"><span class="code">REST 006</span><span class="name">Fabricación de PCB en el laboratorio</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>La placa se diseña en KiCad y se fabrica en el laboratorio, de una cara, por UV o fresado CNC.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>Pistas y separaciones según IPC-2221/2152 (vistas en clase); las del bus de 12 V, para 10 A.</li>
+    <li>La PCB de la entrega 03 era de 5 V y no corresponde. La nueva es de 12 V y lleva entrada, step-down, INA226, ADS1115, relés, MAX98357A y conectores.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Poder fabricar y reparar sin servicios externos.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 022</span></div>
+</div>
+
+<div class="ficha k-rest"><div class="fh"><span class="code">REST 007</span><span class="name">Software libre; Gemini como único servicio externo</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>El software de la Pi y las herramientas de diseño son libres. El único servicio externo es la API de Gemini, y el sistema funciona sin ella.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>Raspberry Pi OS, systemd, Python, Piper o espeak; KiCad para la electrónica; three.js (MIT) para la simulación.</li>
+    <li>Sin Gemini, el agente usa reglas locales (REQNF 005).</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Evitar costos de licencias y facilitar que otros lo reproduzcan.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 021 · SOL 008</span></div>
+</div>
+
+<div class="ficha k-rest"><div class="fh"><span class="code">REST 008</span><span class="name">Metodología de desarrollo</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>El trabajo se organiza con Scrum y un tablero Kanban, sobre un repositorio git compartido.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>Scrum Master: Miguel Ángel López Pinto.</li>
+    <li>Cada historia de usuario es una tarjeta. Pasa a <i>Hecho</i> solo cuando cumple su criterio de aceptación.</li>
+    <li>Se prueba primero por bloque, después en corta duración en ambiente controlado y al final en larga duración en ambiente real.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Asegurar la calidad desde el inicio y ver el avance del equipo.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">No viene de una solicitud explícita; garantiza la construcción y la verificación.</span></div>
+</div>
+
+<div class="ficha k-rest"><div class="fh"><span class="code">REST 009</span><span class="name">Clave de la API fuera del repositorio</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>La clave de Gemini vive solo en la Pi y nunca en git.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>La clave va en un archivo <code>.env</code> en la Pi, ignorado por git. En el repositorio solo va un <code>.env.example</code> sin la clave.</li>
+    <li>El sitio sale de un repositorio público, así que una clave subida por error queda expuesta.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Que nadie use la cuenta del equipo.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 024</span></div>
+</div>
+
+<!-- ================================================================ -->
+<h2 id="calidad" class="keep">7. Atributos de calidad</h2>
+<p>Propiedades del producto con las que el usuario decide si lo acepta o lo rechaza.</p>
+
+<div class="ficha k-cal"><div class="fh"><span class="code">ATRI-CAL 001</span><span class="name">Seguridad</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>La estación no pone en riesgo a las personas ni a la batería, aunque se use mal.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>Solo baja tensión DC, fusible de 10 A y corte en dos niveles que nadie puede anular.</li>
+    <li>Gemini no actúa directamente: todo pasa por el validador y el servicio de control.</li>
+    <li>Bornes de la batería cubiertos; nada de 12 V expuesto fuera de la caja.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Que la pueda usar cualquier vecino.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 005 · SOL 016</span></div>
+</div>
+
+<div class="ficha k-cal"><div class="fh"><span class="code">ATRI-CAL 002</span><span class="name">Confiabilidad y degradación segura</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>Si falla una parte, el resto sigue funcionando en un modo más simple.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>Sin internet o sin Gemini, el agente pasa a reglas locales y la voz a mensajes fijos.</li>
+    <li>Si el agente se cae, el control sigue. Si el sistema se cuelga, el watchdog reinicia la Pi. Si la Pi muere, el corte del controlador sigue protegiendo la batería.</li>
+    <li>Con una LDR dañada, el panel sigue por la posición solar calculada. Si el servo se traba, el potenciómetro lo detecta y queda la alarma.</li>
+    <li>Si el INA226 no responde, se abre el relé 3 por precaución.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Que una falla no deje a la comunidad sin luz.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 007 · SOL 005</span></div>
+</div>
+
+<div class="ficha k-cal"><div class="fh"><span class="code">ATRI-CAL 003</span><span class="name">Usabilidad</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>Un vecino sin capacitación entiende el estado y usa las salidas en pocos pasos.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>Interruptores rotulados con ícono y texto, mensajes de la LCD en español claro, y avisos hablados.</li>
+    <li>El dashboard muestra lo principal en la primera pantalla: la batería y «¿alcanza para la noche?».</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Acceso rápido a la información más relevante.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 006 · SOL 009 · SOL 023</span></div>
+</div>
+
+<div class="ficha k-cal"><div class="fh"><span class="code">ATRI-CAL 004</span><span class="name">Eficiencia energética</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>La energía generada llega a las cargas, no a la electrónica de control.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>Convertidores step-down conmutados, no reguladores lineales.</li>
+    <li>La Pi es el mayor consumo propio, así que el modo de ahorro espacia las consultas y apaga el Wi-Fi de noche. Se descartó la cámara por consumo.</li>
+    <li>El servo queda quieto dentro de la banda muerta.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Más horas de luz con el mismo panel.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 019</span></div>
+</div>
+
+<div class="ficha k-cal"><div class="fh"><span class="code">ATRI-CAL 005</span><span class="name">Mantenibilidad</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>Se diagnostica, se repara y se actualiza con piezas y herramientas comunes.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>Módulos comerciales enchufables (INA226, ADS1115, step-down, relés, USB QC, MAX98357A) que se consiguen en Colombia.</li>
+    <li>El software se actualiza por SSH en la red local o cambiando la microSD. Los servicios se revisan con los registros de systemd.</li>
+    <li>Diseño, software y documentación en un repositorio git.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Que la estación dure más que el curso.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 022 · SOL 021</span></div>
+</div>
+
+<div class="ficha k-cal"><div class="fh"><span class="code">ATRI-CAL 006</span><span class="name">Robustez ambiental</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>La caja y el seguidor soportan el uso a la intemperie.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>Caja cerrada, con prensaestopas para los cables del panel, de las cargas y de la bocina.</li>
+    <li>El grado IP objetivo se fija con IEC 60529 (verificada en la entrega IV) y se valida con un ensayo de chorro de agua en el laboratorio.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Operar donde está la emergencia, no solo en el laboratorio.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 015</span></div>
+</div>
+
+<div class="ficha k-cal"><div class="fh"><span class="code">ATRI-CAL 007</span><span class="name">Trazabilidad de las decisiones</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>Cada decisión del agente se puede rastrear hasta los datos que la produjeron.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>Se registran el resumen enviado, la respuesta de Gemini, el veredicto del validador y la acción ejecutada.</li>
+    <li>Registro en CSV con marca de tiempo y unidades.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Analizar las pruebas y auditar al agente.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 010 · SOL 008</span></div>
+</div>
+
+<div class="ficha k-cal"><div class="fh"><span class="code">ATRI-CAL 008</span><span class="name">Seguridad de la información</span></div>
+  <div class="sec"><span class="lbl">Descripción</span>La estación no expone credenciales ni datos de las personas.</div>
+  <div class="sec"><span class="lbl">Características</span><ul>
+    <li>A Gemini solo se envían datos técnicos del sistema, nunca nombres ni teléfonos de los vecinos.</li>
+    <li>La clave de la API va en <code>.env</code> (REST 009). Los cambios en el dashboard piden PIN.</li></ul></div>
+  <div class="sec"><span class="lbl">Objetivo</span>Que conectar la estación a internet no abra riesgos.</div>
+  <div class="sec"><span class="lbl">Solicitudes asociadas</span><span class="sols">SOL 024 · SOL 009</span></div>
+</div>
+
+<!-- ================================================================ -->
+<h2 id="historias" class="pb">8. Historias de usuario</h2>
+<p>La numeración sigue la prioridad del requerimiento. Cada historia tiene un criterio de aceptación verificable: es la prueba que la pasa a <i>Hecho</i> en el Kanban.</p>
+
+<div class="hu-head"><span class="code">REQ 006</span><h3 style="margin:0">Corte por bajo voltaje</h3><span class="tag t-alta">Prioridad 1</span></div>
+<div class="tw"><table class="hu">
+  <tr><th>Id</th><th>Rol</th><th>Funcionalidad</th><th>Razón / resultado</th><th>Criterio de aceptación</th><th>Evento</th><th>Comportamiento esperado</th></tr>
+  <tr><td>HU-001</td><td>Mantenedor</td><td>Quiero que las cargas se corten solas si la batería baja de 11,8 V</td><td>Para no dañar la AGM por descarga profunda</td><td>El relé 3 abre tras 10 s bajo el umbral</td><td>Con una fuente variable en lugar de la batería, se baja a 11,7 V durante 12 s</td><td>El relé 3 abre a los 10 s ± 2 s; la LCD muestra «CORTE BATERÍA»</td></tr>
+  <tr><td>HU-002</td><td>Mantenedor</td><td>Quiero que no corte por una caída corta</td><td>Para que el arranque del USB o del servo no apague todo</td><td>Una caída de menos de 10 s no abre el relé</td><td>Se baja la fuente a 11,5 V durante 3 s</td><td>El relé sigue cerrado</td></tr>
+  <tr><td>HU-003</td><td>Encargado</td><td>Quiero que las cargas vuelvan solas cuando la batería se recupere</td><td>Para no tener que reiniciar nada al otro día</td><td>Reconecta cuando el voltaje en reposo estimado es ≥ 12,4 V</td><td>Con el relé abierto, se sube la fuente a 12,5 V</td><td>El relé 3 cierra y las salidas vuelven al estado pedido</td></tr>
+  <tr><td>HU-004</td><td>Mantenedor</td><td>Quiero que la batería quede protegida aunque la Pi esté apagada</td><td>Para que una falla del cómputo no dañe la AGM</td><td>La salida de carga del controlador corta sola</td><td>Con la Pi desconectada, se baja la fuente hasta que el controlador actúe</td><td>Las cargas se apagan; se anota el umbral real del controlador del kit</td></tr>
+</table></div>
+
+<div class="hu-head"><span class="code">REQ 008</span><h3 style="margin:0">Servicio de control independiente</h3><span class="tag t-alta">Prioridad 2</span></div>
+<div class="tw"><table class="hu">
+  <tr><th>Id</th><th>Rol</th><th>Funcionalidad</th><th>Razón / resultado</th><th>Criterio de aceptación</th><th>Evento</th><th>Comportamiento esperado</th></tr>
+  <tr><td>HU-005</td><td>Mantenedor</td><td>Quiero que el control siga aunque el agente falle</td><td>Para que la seguridad no dependa del software de IA</td><td>Con el agente detenido, protecciones, LCD e interruptores funcionan</td><td>Se detiene el servicio del agente y se acciona cada interruptor</td><td>Todo responde; el seguidor y el corte siguen activos</td></tr>
+  <tr><td>HU-006</td><td>Mantenedor</td><td>Quiero que la Pi se reinicie sola si se cuelga</td><td>Para no tener que ir hasta la estación</td><td>El watchdog por hardware reinicia la tarjeta</td><td>Se bloquea el sistema a propósito (se detiene el proceso que alimenta el watchdog)</td><td>La Pi reinicia y el control está activo en ≤ 60 s después del arranque</td></tr>
+</table></div>
+
+<div class="hu-head"><span class="code">REQ 003</span><h3 style="margin:0">Medición del estado de energía</h3><span class="tag t-alta">Prioridad 3</span></div>
+<div class="tw"><table class="hu">
+  <tr><th>Id</th><th>Rol</th><th>Funcionalidad</th><th>Razón / resultado</th><th>Criterio de aceptación</th><th>Evento</th><th>Comportamiento esperado</th></tr>
+  <tr><td>HU-007</td><td>Mantenedor</td><td>Quiero que el voltaje y la corriente medidos coincidan con el multímetro</td><td>Para confiar en el corte y en el SoC</td><td>Error ≤ 1 % en V y ≤ 2 % en I</td><td>Se comparan 5 puntos entre 11 y 14 V y entre 0,1 y 3 A</td><td>Los 5 puntos dentro de la tolerancia (REQNF 004)</td></tr>
+  <tr><td>HU-008</td><td>Encargado</td><td>Quiero saber si la batería se está calentando</td><td>Para protegerla y protegerme</td><td>Alarma cuando la temperatura sale del rango de la hoja de datos</td><td>Se calienta el DS18B20 con aire caliente</td><td>Alarma en la LCD, aviso por voz y registro; se suspende la carga USB</td></tr>
+</table></div>
+
+<div class="hu-head"><span class="code">REQ 012</span><h3 style="margin:0">Validador local de decisiones</h3><span class="tag t-alta">Prioridad 4</span></div>
+<div class="tw"><table class="hu">
+  <tr><th>Id</th><th>Rol</th><th>Funcionalidad</th><th>Razón / resultado</th><th>Criterio de aceptación</th><th>Evento</th><th>Comportamiento esperado</th></tr>
+  <tr><td>HU-009</td><td>Mantenedor</td><td>Quiero que una orden peligrosa de Gemini no se ejecute</td><td>Para que un error del modelo no haga daño</td><td>Las respuestas fuera de rango se rechazan</td><td>Se inyecta una respuesta que pide cerrar el relé 3 con la batería bajo el umbral, y otra con un modo que no existe</td><td>Ninguna se ejecuta; ambas quedan registradas como rechazadas</td></tr>
+  <tr><td>HU-010</td><td>Encargado</td><td>Quiero que el agente siga decidiendo si Gemini responde mal o no responde</td><td>Para no quedar sin estrategia</td><td>JSON mal formado o espera &gt; 20 s → reglas locales</td><td>Se simula una respuesta truncada y luego un servidor que no contesta</td><td>El modo pasa a «SIN RED» y las reglas locales toman la decisión</td></tr>
+</table></div>
+
+<div class="hu-head"><span class="code">REQ 013</span><h3 style="margin:0">Anulación manual</h3><span class="tag t-alta">Prioridad 5</span></div>
+<div class="tw"><table class="hu">
+  <tr><th>Id</th><th>Rol</th><th>Funcionalidad</th><th>Razón / resultado</th><th>Criterio de aceptación</th><th>Evento</th><th>Comportamiento esperado</th></tr>
+  <tr><td>HU-011</td><td>Vecino</td><td>Quiero prender la luz con un interruptor</td><td>Para tener luz sin aprender a usar nada</td><td>Interruptor → lámpara en ≤ 300 ms</td><td>Se acciona el interruptor 1 con la batería por encima del umbral</td><td>La lámpara enciende; la LCD muestra «LUZ ON»</td></tr>
+  <tr><td>HU-012</td><td>Encargado</td><td>Quiero que el interruptor mande sobre el agente</td><td>Para decidir yo cuando haga falta</td><td>Interruptor en OFF apaga la salida aunque el agente la pida</td><td>El agente pide USB ON y el interruptor 2 está en OFF</td><td>El USB queda apagado; el registro anota «anulación manual»</td></tr>
+</table></div>
+
+<div class="hu-head"><span class="code">REQ 004 · REQ 005</span><h3 style="margin:0">Salidas de luz y USB</h3><span class="tag t-alta">Prioridad 6</span></div>
+<div class="tw"><table class="hu">
+  <tr><th>Id</th><th>Rol</th><th>Funcionalidad</th><th>Razón / resultado</th><th>Criterio de aceptación</th><th>Evento</th><th>Comportamiento esperado</th></tr>
+  <tr><td>HU-013</td><td>Vecino</td><td>Quiero cargar mi celular en la estación</td><td>Para seguir comunicado en el apagón</td><td>Dos celulares cargan a la vez</td><td>Se conectan dos celulares con el USB habilitado</td><td>Ambos indican carga; la corriente sube en el INA226</td></tr>
+  <tr><td>HU-014</td><td>Encargado</td><td>Quiero que la lámpara se prenda sola en la noche</td><td>Para no estar pendiente de la hora</td><td>Enciende y apaga según el horario configurado</td><td>Llega la hora de inicio (18:00 por defecto)</td><td>La lámpara enciende y se apaga a la hora de fin</td></tr>
+</table></div>
+
+<div class="hu-head"><span class="code">REQ 001</span><h3 style="margin:0">Carga solar</h3><span class="tag t-alta">Prioridad 7</span></div>
+<div class="tw"><table class="hu">
+  <tr><th>Id</th><th>Rol</th><th>Funcionalidad</th><th>Razón / resultado</th><th>Criterio de aceptación</th><th>Evento</th><th>Comportamiento esperado</th></tr>
+  <tr><td>HU-015</td><td>Encargado</td><td>Quiero ver que la batería está cargando con el sol</td><td>Para saber que el panel funciona</td><td>Con sol, la LCD muestra «CARGANDO» y una corriente positiva</td><td>Se destapa el panel a pleno sol</td><td>«CARGANDO» y corriente &gt; 0 en ≤ 2 s</td></tr>
+</table></div>
+
+<div class="hu-head"><span class="code">REQ 002</span><h3 style="margin:0">Seguimiento solar</h3><span class="tag t-media">Prioridad 8</span></div>
+<div class="tw"><table class="hu">
+  <tr><th>Id</th><th>Rol</th><th>Funcionalidad</th><th>Razón / resultado</th><th>Criterio de aceptación</th><th>Evento</th><th>Comportamiento esperado</th></tr>
+  <tr><td>HU-016</td><td>Encargado</td><td>Quiero que el panel siga al sol sin que yo lo mueva</td><td>Para cargar más rápido</td><td>La diferencia entre las LDR vuelve a la banda muerta</td><td>En el laboratorio se mueve una lámpara 30° hacia un lado</td><td>El panel la sigue y se detiene centrado en ≤ 60 s</td></tr>
+  <tr><td>HU-017</td><td>Mantenedor</td><td>Quiero que el seguidor no persiga las nubes</td><td>Para no gastar energía en el servo</td><td>Una sombra de menos de 10 s no mueve el panel</td><td>Se tapa una LDR durante 5 s</td><td>El servo no se mueve</td></tr>
+  <tr><td>HU-018</td><td>Encargado</td><td>Quiero que el panel amanezca mirando al este</td><td>Para aprovechar el primer sol</td><td>De noche el eje queda en la posición del amanecer calculada</td><td>Llega la hora de la puesta del sol calculada</td><td>El panel gira al este y queda quieto hasta el amanecer</td></tr>
+  <tr><td>HU-019</td><td>Mantenedor</td><td>Quiero enterarme si una LDR o el servo fallan</td><td>Para repararlos a tiempo</td><td>Se da alarma cuando la LDR no cuadra con el cálculo o el potenciómetro no confirma la posición</td><td>Se tapa una LDR de forma permanente a pleno sol; luego se traba el eje</td><td>Alarma en LCD y registro; el panel sigue por la posición calculada o queda quieto</td></tr>
+</table></div>
+
+<div class="hu-head"><span class="code">REQ 009</span><h3 style="margin:0">Agente con Gemini</h3><span class="tag t-media">Prioridad 9</span></div>
+<div class="tw"><table class="hu">
+  <tr><th>Id</th><th>Rol</th><th>Funcionalidad</th><th>Razón / resultado</th><th>Criterio de aceptación</th><th>Evento</th><th>Comportamiento esperado</th></tr>
+  <tr><td>HU-020</td><td>Encargado</td><td>Quiero saber, antes de aceptar un celular, si la energía alcanza para la noche</td><td>Para no quedar sin luz a las 22:00</td><td>La recomendación coincide con el balance de energía calculado</td><td>Un vecino pide cargar con SoC bajo y poca producción</td><td>«NO, guardar para la noche» en la LCD, el dashboard y la voz, con la razón</td></tr>
+  <tr><td>HU-021</td><td>Encargado</td><td>Quiero que el agente reaccione en cuanto pasa algo</td><td>Para no esperar 15 minutos en una emergencia</td><td>Un evento dispara una consulta inmediata</td><td>La batería cruza el umbral de batería baja</td><td>Hay consulta y decisión en ≤ 30 s, registradas</td></tr>
+  <tr><td>HU-022</td><td>Encargado</td><td>Quiero que el agente funcione sin internet</td><td>Porque en la emergencia no hay datos</td><td>Sin red, las reglas locales deciden</td><td>Se corta el acceso a internet del router</td><td>Las decisiones siguen saliendo cada ciclo con el modo «SIN RED»</td></tr>
+</table></div>
+
+<div class="hu-head"><span class="code">REQ 015</span><h3 style="margin:0">Avisos por voz</h3><span class="tag t-baja">Prioridad 10</span></div>
+<div class="tw"><table class="hu">
+  <tr><th>Id</th><th>Rol</th><th>Funcionalidad</th><th>Razón / resultado</th><th>Criterio de aceptación</th><th>Evento</th><th>Comportamiento esperado</th></tr>
+  <tr><td>HU-023</td><td>Vecino</td><td>Quiero que la estación me avise hablando si se va a cortar la energía</td><td>Para desconectar a tiempo lo que necesito</td><td>Se oye un aviso en cada evento, con y sin red</td><td>La batería entra en batería baja (con red y luego sin red)</td><td>Con red habla el texto de Gemini; sin red, el mensaje fijo de Piper o espeak</td></tr>
+  <tr><td>HU-024</td><td>Encargado</td><td>Quiero callar la estación o pedirle que hable</td><td>Para no molestar de noche</td><td>El interruptor 3 alterna entre silencio y habla</td><td>Se acciona el interruptor 3 durante un evento</td><td>En silencio no suena nada; al pulsarlo dice el estado actual</td></tr>
+</table></div>
+
+<div class="hu-head"><span class="code">REQ 007</span><h3 style="margin:0">Pantalla local</h3><span class="tag t-media">Prioridad 11</span></div>
+<div class="tw"><table class="hu">
+  <tr><th>Id</th><th>Rol</th><th>Funcionalidad</th><th>Razón / resultado</th><th>Criterio de aceptación</th><th>Evento</th><th>Comportamiento esperado</th></tr>
+  <tr><td>HU-025</td><td>Vecino</td><td>Quiero ver en la pantalla cuánta batería queda</td><td>Para saber si puedo cargar el celular</td><td>Voltaje, SoC, cargas y modo, actualizados cada ≤ 2 s</td><td>El vecino se acerca a la estación</td><td>La LCD muestra, por ejemplo, «12,6V 64% +» y «LUZ USB NORMAL»</td></tr>
+</table></div>
+
+<div class="hu-head"><span class="code">REQ 010</span><h3 style="margin:0">Dashboard web local</h3><span class="tag t-media">Prioridad 12</span></div>
+<div class="tw"><table class="hu">
+  <tr><th>Id</th><th>Rol</th><th>Funcionalidad</th><th>Razón / resultado</th><th>Criterio de aceptación</th><th>Evento</th><th>Comportamiento esperado</th></tr>
+  <tr><td>HU-026</td><td>Encargado</td><td>Quiero ver el estado desde mi celular</td><td>Para no tener que ir hasta la caja</td><td>La página abre con la Pi conectada al hotspot del celular, sin datos móviles</td><td>El encargado activa el hotspot y abre la dirección de la estación</td><td>Ve batería, salidas, recomendación y gráfica del día</td></tr>
+  <tr><td>HU-027</td><td>Encargado</td><td>Quiero cambiar el horario de la lámpara y la hora con mi PIN</td><td>Para adaptarlo a la comunidad, y porque sin red la Pi pierde la hora</td><td>Sin PIN no se guarda ningún cambio</td><td>Se intenta cambiar el horario sin PIN y luego con PIN</td><td>Primero se rechaza; después se guarda y el control lo aplica</td></tr>
+</table></div>
+
+<div class="hu-head"><span class="code">REQ 011 · REQ 014</span><h3 style="margin:0">Registro, consumo y ganancia del seguidor</h3><span class="tag t-baja">Prioridad 13</span></div>
+<div class="tw"><table class="hu">
+  <tr><th>Id</th><th>Rol</th><th>Funcionalidad</th><th>Razón / resultado</th><th>Criterio de aceptación</th><th>Evento</th><th>Comportamiento esperado</th></tr>
+  <tr><td>HU-028</td><td>Mantenedor</td><td>Quiero descargar el registro en CSV</td><td>Para analizar las pruebas</td><td>CSV de 24 h sin huecos, con marca de tiempo y unidades</td><td>Tras 24 h de operación se descarga el CSV</td><td>1440 filas por día, una por minuto, con las decisiones del agente</td></tr>
+  <tr><td>HU-029</td><td>Mantenedor</td><td>Quiero saber cuánto consume la Pi de verdad</td><td>Para cerrar el balance de energía</td><td>El consumo de la Pi se mide en cada modo</td><td>Se mide con el INA226 en reposo, con agente, con voz y en modo de ahorro</td><td>Tabla de W por modo; se actualiza REQNF 001</td></tr>
+  <tr><td>HU-030</td><td>Equipo</td><td>Quiero medir cuánto gana el seguidor frente al panel fijo</td><td>Para justificar el servo y las LDR</td><td>Reporte de energía (Wh) por modo y ganancia en %</td><td>Se corre el modo de ensayo un día soleado con las cargas apagadas</td><td>Tabla de Wh con y sin seguimiento por franja horaria</td></tr>
+</table></div>
+
+<!-- ================================================================ -->
+<h2 id="kanban" class="pb">9. Tablero Kanban</h2>
+<p>Estado al 5 de noviembre de 2026. Scrum Master: Miguel Ángel López Pinto. Cada historia es una tarjeta, y una tarjeta pasa de <i>En pruebas</i> a <i>Hecho</i> solo si cumple el criterio de aceptación de su historia.</p>
+<p class="note">El tablero del equipo está en Kanbanchi: <a href="https://app.kanbanchi.com/dashboard/5922080451592192-6139501359792128/d-6139501359792128">abrir el tablero</a>. Ahí se siguen las historias de usuario (HU-001 a HU-030) y las tareas de diseño.</p>
+
+<h3 class="keep">Protocolo de verificación (orden de las pruebas)</h3>
+<div class="tw"><table>
+  <tr><th>Etapa</th><th>Qué se prueba</th><th>Historias</th></tr>
+  <tr><td><b>1. Laboratorio, por bloque</b></td><td>Con una fuente variable en lugar de la batería y una carga electrónica o resistiva: corte en dos niveles, medición, relés, servicios y watchdog, validador con respuestas inyectadas</td><td class="mono">HU-001–012, 029</td></tr>
+  <tr><td><b>2. Corta duración, ambiente controlado</b></td><td>Sistema completo con batería real y una lámpara como sol: seguidor, pantalla, agente con y sin red, voz, dashboard por hotspot</td><td class="mono">HU-013–027</td></tr>
+  <tr><td><b>3. Larga duración, ambiente real</b></td><td>Al aire libre, 24–72 h: autonomía, registro sin huecos, ganancia del seguidor, robustez</td><td class="mono">HU-028, 030 · REQNF 001</td></tr>
+</table></div>
+</main>
+
+<footer>
+  <div class="wrap">
+    Diseño de Sistemas Electrónicos · Universidad Nacional de Colombia · 2026-2. Documento elaborado por el equipo con asistencia de Claude (Anthropic).
+  </div>
+</footer>
+
+</body>
+</html>
