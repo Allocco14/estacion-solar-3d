@@ -3,219 +3,266 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Estación solar portátil</title>
-<meta name="description" content="Sistema portátil inteligente de energía solar para emergencias: equipo, arquitectura, requerimientos, avance y simulación 3D (DSE 2026-2, Universidad Nacional de Colombia).">
+<title>Solar · Energía solar para cuando se va la luz</title>
+<meta name="description" content="Solar: estación solar portátil con seguimiento del sol, batería de 84 Wh, luz LED, carga USB y un agente que reparte la energía y avisa en voz alta. Prototipo de DSE 2026-2, Universidad Nacional de Colombia.">
+<meta name="theme-color" content="#0B0F14">
 <script>
   // Enlaces viejos a la simulación (?escenario=…) siguen funcionando.
   if (/[?&]escenario=/.test(location.search)) location.replace("simulacion/" + location.search + location.hash);
 </script>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230B0F14'/%3E%3Cpath d='M6 17a10 10 0 0 1 20 0' fill='none' stroke='%23F59E0B' stroke-width='2' stroke-dasharray='3 3' stroke-linecap='round'/%3E%3Cpath d='M7 19.5L25 13' stroke='%23ECF2F8' stroke-width='2.6' stroke-linecap='round'/%3E%3Cpath d='M16 16v9M11 25h10' stroke='%23ECF2F8' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='16' r='2.6' fill='%23F59E0B'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;600;700&family=Public+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="estilo.css">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="producto.css">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+<script type="module" src="producto3d.js"></script>
 </head>
 <body>
-<header class="top">
-  <div class="wrap">
-    <a class="brand" href="./"><span class="dot"></span>Estación solar</a>
-    <nav>
-      <a href="./" aria-current="page">Proyecto</a>
-      <a href="#equipo">Equipo</a>
-      <a href="requerimientos/">Requerimientos</a>
-      <a href="https://app.kanbanchi.com/dashboard/5922080451592192-6139501359792128/d-6139501359792128">Kanban</a>
-      <a href="simulacion/">Simulación 3D</a>
+
+<header class="nav">
+  <div class="in">
+    <a class="marca" href="./" aria-label="Solar, inicio">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3.5 13a8.5 8.5 0 0 1 17 0" stroke="#F59E0B" stroke-width="1.6" stroke-dasharray="2.4 2.4" stroke-linecap="round"/><path d="M4.5 15L19.5 9.6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M12 12.3V20M8 20h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="12.3" r="2.1" fill="#F59E0B"/></svg>
+      SOLAR
+    </a>
+    <nav aria-label="Secciones">
+      <a href="#noche">Cómo funciona</a>
+      <a href="#ficha">Especificaciones</a>
+      <a href="#preguntas">Preguntas</a>
+      <a href="proyecto/">El proyecto</a>
     </nav>
+    <a class="cta-nav" href="simulacion/">Pruébala en 3D</a>
   </div>
 </header>
 
-<main class="wrap">
+<main>
+<!-- ═══ HERO ═══ -->
 <section class="hero">
-  <div class="eyebrow"><b>DSE 2026-2</b> · Diseño de Sistemas Electrónicos · Universidad Nacional de Colombia</div>
-  <h1>Sistema portátil inteligente de energía solar para emergencias</h1>
-  <p class="lede">Una estación que se carga con el sol y da luz y carga de celulares cuando se va la energía. Un panel de 20 W con seguimiento en un eje llena una batería de 12 V. Una Raspberry Pi Zero 2 W protege la batería, maneja las salidas y corre un agente con Gemini que reparte la energía para que alcance para la noche, y que avisa hablando cuando pasa algo.</p>
-  <div class="btns">
-    <a class="btn primary" href="simulacion/">Ver la simulación 3D</a>
-    <a class="btn" href="requerimientos/">Requerimientos</a>
-    <a class="btn" href="https://app.kanbanchi.com/dashboard/5922080451592192-6139501359792128/d-6139501359792128">Tablero Kanban</a>
+  <div class="in hero-in">
+    <div class="hero-txt">
+      <p class="kicker">Estación solar portátil para emergencias</p>
+      <h1>Cuando se va la luz, <span>Solar no.</span></h1>
+      <p class="sub">Se carga sola con el sol, ilumina la noche y mantiene cargados los celulares. Y un agente inteligente reparte la energía para que alcance hasta el amanecer, y te avisa en voz alta cuando algo pasa.</p>
+      <div class="acciones">
+        <a class="b b-sol" href="simulacion/">Pruébala en 3D <span aria-hidden="true">→</span></a>
+        <a class="b b-linea" href="#ficha">Ver especificaciones</a>
+      </div>
+    </div>
+    <div class="hero-3d" data-producto3d>
+      <div class="cargando" aria-hidden="true"></div>
+      <p class="sin3d-msg">Tu navegador no muestra la vista 3D. <a href="simulacion/">Abre la simulación</a>.</p>
+      <p class="arrastra" aria-hidden="true">Arrastra para girar</p>
+      <div class="modo" role="group" aria-label="Ver de día o de noche">
+        <button type="button" data-modo="dia" aria-pressed="true"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3.2" fill="currentColor"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.4 1.4M11.6 11.6L13 13M13 3l-1.4 1.4M4.4 11.6L3 13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Día</button>
+        <button type="button" data-modo="noche" aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10.5 1.8A6.3 6.3 0 1 0 14.2 11 5.2 5.2 0 0 1 10.5 1.8z" fill="currentColor"/></svg>Noche</button>
+      </div>
+    </div>
+  </div>
+  <div class="in">
+    <dl class="cifras">
+      <div><dt>Batería</dt><dd>84<small>Wh</small></dd><p>AGM 12 V 7 Ah</p></div>
+      <div><dt>Panel</dt><dd>20<small>W</small></dd><p>sigue al sol en un eje</p></div>
+      <div><dt>Luz cada noche</dt><dd>4<small>h</small></dd><p>de 18:00 a 22:00, meta de diseño*</p></div>
+      <div><dt>Portátil</dt><dd>≤ 8<small>kg</small></dd><p>caja de 306 × 176 × 121 mm</p></div>
+    </dl>
   </div>
 </section>
 
-<section class="grid g4">
-  <div class="card"><div class="eyebrow">Energía</div><div class="stat">84 Wh</div><div class="small muted">AGM 12 V 7 Ah; ≈ 40 Wh útiles al 50 %</div></div>
-  <div class="card"><div class="eyebrow">Generación</div><div class="stat">20 W</div><div class="small muted">1 panel con seguidor de 1 eje</div></div>
-  <div class="card"><div class="eyebrow">Salidas</div><div class="stat">12 V · USB</div><div class="small muted">Lámpara LED y 2 puertos QC 3.0</div></div>
-  <div class="card"><div class="eyebrow">Presupuesto</div><div class="stat">$181.990</div><div class="small muted">COP cotizado; faltan potenciómetro, amplificador y bocina. Tope de $200.000</div></div>
+<!-- ═══ HISTORIA: LA NOCHE DEL APAGÓN ═══ -->
+<section class="noche" id="noche">
+  <div class="in">
+    <p class="kicker">Así funciona</p>
+    <h2>Una noche sin red, contada por horas.</h2>
+    <ol class="horas">
+      <li><time>18:00</time><h3>Se va la luz. Solar no.</h3><p>A su hora se enciende la lámpara LED de 12 V. Y si prefieres, la mandas tú con un interruptor físico.</p></li>
+      <li><time>19:00</time><h3>Dos celulares cargando.</h3><p>Dos puertos USB con carga rápida QC 3.0 para que la familia siga comunicada.</p></li>
+      <li><time>22:00</time><h3>Hace las cuentas por ti.</h3><p>El agente mira cuánta energía queda y cuánta falta para el amanecer. Si no alcanza, te lo dice en voz alta y prioriza la luz.</p></li>
+      <li><time>05:30</time><h3>Amanece. Ya está mirando al este.</h3><p>El panel giró durante la noche para recibir el primer sol. A lo largo del día lo sigue hasta el oeste.</p></li>
+    </ol>
+  </div>
 </section>
 
-<h2 id="equipo">Equipo</h2>
-<div class="grid g2">
-  <div class="card person"><div class="avatar">IG</div><div><h3>Ivy Sofía González Varela</h3><div class="small muted" data-rol>Rol pendiente</div></div></div>
-  <div class="card person"><div class="avatar">JO</div><div><h3>José Luis Ocoró Banguera</h3><div class="small muted" data-rol>Rol pendiente</div></div></div>
-  <div class="card person"><div class="avatar">ML</div><div><h3>Miguel Ángel López Pinto</h3><div class="small muted" data-rol>Scrum Master</div></div></div>
-  <div class="card person"><div class="avatar">AC</div><div><h3>Álvaro Chaves Ladino</h3><div class="small muted" data-rol>Rol pendiente</div></div></div>
-</div>
+<!-- ═══ CARACTERÍSTICAS ═══ -->
+<section class="claro">
+  <div class="in">
+    <p class="kicker">Características</p>
+    <h2>Todo lo que necesitas cuando no hay red.</h2>
+    <div class="feats">
+      <article>
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 18a11 11 0 0 1 22 0" class="a"/><path d="M7 22l18-7" class="k"/><path d="M16 18.5V28M11 28h10" class="k"/><circle cx="16" cy="18.5" r="2" class="f"/></svg>
+        <span class="spec">1 eje · MG996R</span>
+        <h3>Sigue al sol solo</h3>
+        <p>Dos sensores de luz, este y oeste, y un servo mueven el panel durante el día. Hecho para sacar más energía que el mismo panel fijo, sin que tengas que tocarlo.</p>
+      </article>
+      <article>
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M11 6h10l-2 10h-6z" class="k"/><path d="M13 16v4h6v-4" class="k"/><path d="M16 24v3M8 22l-2 2M24 22l2 2" class="a"/></svg>
+        <span class="spec">12 V · 18–22 h</span>
+        <h3>Luz para la noche</h3>
+        <p>Lámpara LED de 12 V con horario de 18:00 a 22:00 por defecto, configurable. Y su propio interruptor para encenderla cuando quieras.</p>
+      </article>
+      <article>
+        <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="9" y="4" width="14" height="24" rx="3" class="k"/><path d="M17 11l-3 5h4l-3 5" class="a"/></svg>
+        <span class="spec">2× QC 3.0 · 24 W</span>
+        <h3>Carga dos celulares</h3>
+        <p>Dos puertos USB con Quick Charge 3.0. Se pueden apagar desde el frente para guardar energía.</p>
+      </article>
+      <article>
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 4l10 4v7c0 6-4.5 10.5-10 13C10.5 25.5 6 21 6 15V8z" class="k"/><path d="M11.5 16l3 3 6-6" class="a"/></svg>
+        <span class="spec">Corte a 11,8 V</span>
+        <h3>Se protege sola</h3>
+        <p>Corte por bajo voltaje en dos niveles: uno en el controlador de carga y otro en la Raspberry Pi. La batería no se daña aunque nadie esté pendiente.</p>
+      </article>
+      <article>
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M6 13h5l7-6v18l-7-6H6z" class="k"/><path d="M22 12a6 6 0 0 1 0 8M25 9a10 10 0 0 1 0 14" class="a"/></svg>
+        <span class="spec">I²S · 3 W</span>
+        <h3>Te habla</h3>
+        <p>Un agente con Gemini decide cómo repartir la energía y te avisa por una bocina: si conviene ahorrar, si ya cargó, si algo falla.</p>
+      </article>
+      <article>
+        <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="9" y="4" width="14" height="24" rx="3" class="k"/><path d="M12 20l3-4 2.5 2.5L21 13" class="a"/><path d="M14 24h4" class="k"/></svg>
+        <span class="spec">Wi-Fi local + LCD</span>
+        <h3>Todo en tu celular</h3>
+        <p>Un panel web por Wi-Fi local muestra la carga, lo que entra del sol y lo que se consume. Y una pantalla en la caja, por si no hay celular.</p>
+      </article>
+    </div>
+  </div>
+</section>
 
-<h2 id="arquitectura">Arquitectura</h2>
-<p>La <b>Raspberry Pi Zero 2 W</b> es el único cómputo y queda siempre encendida. Corre dos servicios separados. El de <b>control</b> trabaja cada 1–2 s: lee los sensores, sigue el sol, aplica las protecciones y mueve el servo y los relés, sin depender de la red. El del <b>agente</b> consulta a Gemini cada 15 min y cuando pasa algo; un validador local revisa cada respuesta antes de que llegue al control, y sin red decide con reglas locales. La protección de la batería tiene un segundo nivel en el controlador de carga, que no depende de la Pi.</p>
-<h3 class="keep">Hardware</h3>
-<div class="dgwrap">
-<svg class="dg" viewBox="0 0 1040 590" role="img" aria-label="Diagrama de hardware: el panel de 12 V y 20 W carga la batería a través del controlador y el fusible; el bus de 12 V alimenta tres relés y dos step-down; la Raspberry Pi Zero 2 W es el único cómputo: lee las LDR y el potenciómetro por un ADS1115, el INA226 por I²C y la temperatura por 1-Wire; mueve el servo, controla los relés, muestra en la LCD y habla por un amplificador I²S y una bocina; sale por WiFi hacia Gemini y el celular.">
-  <defs>
-    <marker id="h-ah" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="mk" d="M0,0 L10,5 L0,10 z"/></marker>
-    <marker id="h-ahp" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto-start-reverse"><path class="mk-p" d="M0,0 L10,5 L0,10 z"/></marker>
-    <marker id="h-ahc" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path class="mk-c" d="M0,0 L10,5 L0,10 z"/></marker>
-  </defs>
-  <rect class="bound" x="20" y="28" width="785" height="545" rx="8"/>
-  <text class="zl" x="34" y="47">DENTRO DEL DISPOSITIVO</text>
-  <text class="zl" x="840" y="232">FUERA DEL DISPOSITIVO</text>
-  <rect class="box" x="40" y="60" width="130" height="50" rx="4"/><text class="t" x="105" y="81">Panel 12 V</text><text class="s" x="105" y="98">20 W · 1 eje</text>
-  <rect class="box" x="200" y="60" width="140" height="50" rx="4"/><text class="t" x="270" y="81">Controlador de carga</text><text class="s" x="270" y="98">kit del curso</text>
-  <rect class="box" x="370" y="60" width="80" height="50" rx="4"/><text class="t" x="410" y="81">Fusible</text><text class="s" x="410" y="98">10 A</text>
-  <rect class="box" x="480" y="60" width="130" height="50" rx="4"/><text class="t" x="545" y="81">Batería AGM</text><text class="s" x="545" y="98">12 V · 7 Ah</text>
-  <rect class="box" x="640" y="60" width="130" height="50" rx="4"/><text class="t" x="705" y="81">INA226</text><text class="s" x="705" y="98">mide V e I del bus</text>
-  <line class="pw" x1="170" y1="85" x2="198" y2="85" marker-end="url(#h-ahp)"/>
-  <line class="pw" x1="340" y1="85" x2="368" y2="85" marker-end="url(#h-ahp)"/>
-  <line class="pw" x1="450" y1="85" x2="478" y2="85" marker-end="url(#h-ahp)"/>
-  <line class="pw" x1="610" y1="85" x2="638" y2="85" marker-end="url(#h-ahp)"/>
-  <line class="pw" x1="705" y1="110" x2="705" y2="165"/>
-  <line class="pw" x1="115" y1="165" x2="727" y2="165"/>
-  <text class="lb p" x="140" y="157">bus 12 V</text>
-  <line class="pw" x1="115" y1="165" x2="115" y2="193" marker-end="url(#h-ahp)"/>
-  <line class="pw" x1="285" y1="165" x2="285" y2="193" marker-end="url(#h-ahp)"/>
-  <line class="pw" x1="460" y1="165" x2="460" y2="193" marker-end="url(#h-ahp)"/>
-  <line class="pw" x1="610" y1="165" x2="610" y2="193" marker-end="url(#h-ahp)"/>
-  <line class="pw" x1="727" y1="165" x2="727" y2="193" marker-end="url(#h-ahp)"/>
-  <rect class="box" x="40" y="195" width="150" height="45" rx="4"/><text class="t" x="115" y="214">Relé 1</text><text class="s" x="115" y="230">lámpara LED 12 V</text>
-  <rect class="box" x="210" y="195" width="150" height="45" rx="4"/><text class="t" x="285" y="214">Relé 2</text><text class="s" x="285" y="230">USB QC 3.0 doble</text>
-  <rect class="box" x="380" y="195" width="160" height="45" rx="4"/><text class="t" x="460" y="214">Relé 3</text><text class="s" x="460" y="230">corte por bajo voltaje</text>
-  <rect class="box" x="560" y="195" width="100" height="45" rx="4"/><text class="t" x="610" y="214">Step-down</text><text class="s" x="610" y="230">5 V Pi y lógica</text>
-  <rect class="box" x="675" y="195" width="105" height="45" rx="4"/><text class="t" x="727" y="214">Step-down</text><text class="s" x="727" y="230">6 V servo</text>
-  <line class="pw" x1="595" y1="240" x2="595" y2="318" marker-end="url(#h-ahp)"/>
-  <text class="lb p" x="603" y="290">5 V</text>
-  <line class="sig" x1="420" y1="320" x2="420" y2="270"/>
-  <line class="sig" x1="115" y1="270" x2="460" y2="270"/>
-  <line class="sig" x1="115" y1="270" x2="115" y2="242" marker-end="url(#h-ah)"/>
-  <line class="sig" x1="285" y1="270" x2="285" y2="242" marker-end="url(#h-ah)"/>
-  <line class="sig" x1="460" y1="270" x2="460" y2="242" marker-end="url(#h-ah)"/>
-  <text class="lb" x="160" y="285">GPIO: 3 relés</text>
-  <polyline class="sig" points="550,320 550,135 670,135 670,112" marker-end="url(#h-ah)" marker-start="url(#h-ah)"/>
-  <text class="lb" x="520" y="300">I²C</text>
-  <rect class="box hub" x="370" y="320" width="240" height="120" rx="5"/>
-  <text class="t" x="490" y="354">Raspberry Pi Zero 2 W</text>
-  <text class="s" x="490" y="374">control · agente · voz · dashboard</text>
-  <text class="s" x="490" y="392">único cómputo, siempre encendida</text>
-  <text class="s" x="490" y="410">~1 W promedio con WiFi</text>
-  <rect class="box" x="40" y="320" width="140" height="40" rx="3"/><text class="s f" x="110" y="337">2 LDR este / oeste</text><text class="s" x="110" y="352">+ potenciómetro del eje</text>
-  <rect class="box new" x="210" y="320" width="120" height="40" rx="3"/><text class="t" x="270" y="337">ADS1115</text><text class="s" x="270" y="352">ADC de 4 canales</text>
-  <line class="sig" x1="180" y1="340" x2="208" y2="340" marker-end="url(#h-ah)"/>
-  <line class="sig" x1="330" y1="340" x2="368" y2="340" marker-end="url(#h-ah)"/><text class="lb" x="349" y="334" text-anchor="middle">I²C</text>
-  <rect class="box" x="210" y="372" width="120" height="26" rx="3"/><text class="s f" x="270" y="389">3 interruptores</text>
-  <line class="sig" x1="330" y1="385" x2="368" y2="385" marker-end="url(#h-ah)"/><text class="lb" x="349" y="380" text-anchor="middle">GPIO</text>
-  <rect class="box" x="210" y="406" width="120" height="26" rx="3"/><text class="s f" x="270" y="423">DS18B20 temp.</text>
-  <line class="sig" x1="330" y1="419" x2="368" y2="419" marker-end="url(#h-ah)"/><text class="lb" x="349" y="414" text-anchor="middle">1-Wire</text>
-  <rect class="box" x="220" y="500" width="130" height="45" rx="4"/><text class="t" x="285" y="519">Pantalla LCD</text><text class="s" x="285" y="535">estado local</text>
-  <polyline class="sig" points="425,440 425,482 285,482 285,498" marker-end="url(#h-ah)"/>
-  <text class="lb" x="295" y="494">I²C</text>
-  <rect class="box" x="400" y="500" width="130" height="45" rx="4"/><text class="t" x="465" y="519">Servo MG996R</text><text class="s" x="465" y="535">eje único · 6 V</text>
-  <line class="sig" x1="480" y1="440" x2="480" y2="498" marker-end="url(#h-ah)"/>
-  <text class="lb" x="488" y="474">PWM</text>
-  <rect class="box new" x="550" y="500" width="130" height="45" rx="4"/><text class="t" x="615" y="519">Amplificador I²S</text><text class="s" x="615" y="535">p. ej. MAX98357A</text>
-  <line class="sig" x1="590" y1="440" x2="590" y2="498" marker-end="url(#h-ah)"/>
-  <text class="lb" x="598" y="474">I²S</text>
-  <rect class="box new" x="710" y="500" width="85" height="45" rx="4"/><text class="t" x="752" y="519">Bocina</text><text class="s" x="752" y="535">3 W · 4 Ω</text>
-  <line class="sig" x1="680" y1="522" x2="708" y2="522" marker-end="url(#h-ah)"/>
-  <rect class="box cloud" x="840" y="250" width="180" height="50" rx="4"/><text class="t" x="930" y="271">Gemini API</text><text class="s" x="930" y="288">decide · texto para voz</text>
-  <rect class="box" x="840" y="380" width="180" height="50" rx="4"/><text class="t" x="930" y="401">Router o hotspot</text><text class="s" x="930" y="418">del celular</text>
-  <rect class="box" x="840" y="480" width="180" height="50" rx="4"/><text class="t" x="930" y="501">Celular del usuario</text><text class="s" x="930" y="518">dashboard web</text>
-  <line class="wl" x1="610" y1="405" x2="838" y2="405" marker-end="url(#h-ahc)" marker-start="url(#h-ahc)"/>
-  <text class="lb c" x="720" y="398" text-anchor="middle">WiFi</text>
-  <line class="wl" x1="930" y1="380" x2="930" y2="302" marker-end="url(#h-ahc)" marker-start="url(#h-ahc)"/>
-  <text class="lb c" x="940" y="345">HTTPS · internet</text>
-  <line class="wl" x1="930" y1="430" x2="930" y2="478" marker-end="url(#h-ahc)" marker-start="url(#h-ahc)"/>
-  <text class="lb c" x="940" y="459">WiFi local</text>
-</svg>
-</div>
-<div class="dglegend" aria-hidden="true"><span><i></i>potencia</span><span><i class="sig"></i>señal o bus</span><span><i class="wl"></i>inalámbrico, depende de la red</span><span>borde ámbar = bloque nuevo frente al BOM</span></div>
-<p class="small muted">La energía baja de arriba hacia abajo. La Pi es el único cómputo: todo sensor y todo actuador pasa por ella, y Gemini queda fuera de la caja. Para simplificar, el relé 3 está dibujado como una carga más; en el esquemático va en serie entre el bus y las cargas, que salen por la salida de carga del controlador (primer nivel de corte, REQ 006).</p>
+<!-- ═══ CONFIABILIDAD ═══ -->
+<section class="oscuro">
+  <div class="in split">
+    <div>
+      <p class="kicker">Inteligente, pero no frágil</p>
+      <h2>Si se cae el internet, Solar sigue igual.</h2>
+      <p class="sub">Adentro corren dos programas separados. El de control protege la batería y mueve el panel cada 1 a 2 segundos, y no espera a nadie. El agente consulta a Gemini cada 15 minutos; sin red decide con reglas locales. Y un validador revisa cada decisión antes de que llegue al control.</p>
+      <a class="enlace" href="proyecto/#arquitectura">Ver la arquitectura completa →</a>
+    </div>
+    <div class="capas" aria-label="Tres capas de decisión">
+      <div class="capa c1"><span>Siempre</span><b>Control y protección</b><em>cada 1–2 s · sin red</em></div>
+      <div class="capa c2"><span>Filtro</span><b>Validador local</b><em>rangos y modos válidos</em></div>
+      <div class="capa c3"><span>Si hay internet</span><b>Agente con Gemini</b><em>cada 15 min · estrategia y voz</em></div>
+    </div>
+  </div>
+</section>
 
-<h3 class="keep">Flujo de información</h3>
-<div class="dgwrap">
-<svg class="dg" viewBox="0 0 1040 560" role="img" aria-label="Diagrama de flujo de información en cuatro franjas, todo en la Raspberry Pi salvo Gemini: un servicio de control cierra el lazo de sensores, seguimiento, protecciones y actuadores cada 1 a 2 segundos; el agente arma un resumen con el estado, consulta a Gemini o usa reglas sin red, y un validador local entrega el modo y las consignas al control; los avisos salen por la bocina y el dashboard.">
-  <defs>
-    <marker id="f-ah" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="mk" d="M0,0 L10,5 L0,10 z"/></marker>
-    <marker id="f-ahc" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path class="mk-c" d="M0,0 L10,5 L0,10 z"/></marker>
-  </defs>
-  <rect class="z1" x="10" y="28" width="1020" height="112" rx="6"/>
-  <rect class="z2" x="10" y="158" width="1020" height="132" rx="6"/>
-  <rect class="z3" x="10" y="308" width="1020" height="114" rx="6"/>
-  <rect class="z4" x="10" y="440" width="1020" height="110" rx="6"/>
-  <text class="zl" x="24" y="46">RASPBERRY PI · SERVICIO DE CONTROL · CADA 1–2 s · SIEMPRE ACTIVO</text>
-  <text class="zl" x="24" y="176">RASPBERRY PI · AGENTE</text>
-  <text class="zl" x="24" y="326">NUBE · CADA 5–15 min · SOLO CON INTERNET</text>
-  <text class="zl" x="24" y="458">USUARIO</text>
-  <rect class="box" x="30" y="62" width="150" height="50" rx="4"/><text class="t" x="105" y="83">Sensores</text><text class="s" x="105" y="100">ADS1115, INA226, temp.</text>
-  <rect class="box" x="240" y="62" width="150" height="50" rx="4"/><text class="t" x="315" y="83">Adquisición</text><text class="s" x="315" y="100">filtro y validación</text>
-  <rect class="box" x="450" y="62" width="150" height="50" rx="4"/><text class="t" x="525" y="83">Seguimiento del sol</text><text class="s" x="525" y="100">E/O + histéresis</text>
-  <rect class="box hub" x="660" y="62" width="150" height="50" rx="4"/><text class="t" x="735" y="83">Protecciones</text><text class="s" x="735" y="100">bajo voltaje · límites</text>
-  <rect class="box" x="870" y="62" width="150" height="50" rx="4"/><text class="t" x="945" y="83">Actuadores</text><text class="s" x="945" y="100">servo · 3 relés</text>
-  <line class="sig" x1="180" y1="87" x2="238" y2="87" marker-end="url(#f-ah)"/>
-  <line class="sig" x1="390" y1="87" x2="448" y2="87" marker-end="url(#f-ah)"/>
-  <line class="sig" x1="600" y1="87" x2="658" y2="87" marker-end="url(#f-ah)"/>
-  <line class="sig" x1="810" y1="87" x2="868" y2="87" marker-end="url(#f-ah)"/>
-  <text class="lb" x="629" y="80" text-anchor="middle">ángulo</text>
-  <text class="lb" x="839" y="80" text-anchor="middle">PWM, GPIO</text>
-  <line class="sig" x1="315" y1="112" x2="315" y2="203" marker-end="url(#f-ah)"/>
-  <text class="lb" x="325" y="150">estado cada 1 s</text>
-  <rect class="box" x="240" y="205" width="150" height="55" rx="4"/><text class="t" x="315" y="228">Estado del sistema</text><text class="s" x="315" y="245">lecturas + historial</text>
-  <rect class="box hub" x="450" y="205" width="150" height="55" rx="4"/><text class="t" x="525" y="228">Agente</text><text class="s" x="525" y="245">arma el resumen</text>
-  <rect class="box hub" x="660" y="205" width="150" height="55" rx="4"/><text class="t" x="735" y="228">Validador local</text><text class="s" x="735" y="245">rangos y modos válidos</text>
-  <rect class="box" x="870" y="205" width="150" height="55" rx="4"/><text class="t" x="945" y="228">Avisos y registro</text><text class="s" x="945" y="245">mensaje · log · motivo</text>
-  <line class="sig" x1="390" y1="232" x2="448" y2="232" marker-end="url(#f-ah)"/>
-  <line class="sig" x1="600" y1="240" x2="658" y2="240" marker-end="url(#f-ah)"/>
-  <text class="lb" x="629" y="232" text-anchor="middle">sin red:</text>
-  <text class="lb" x="629" y="256" text-anchor="middle">reglas</text>
-  <line class="sig" x1="810" y1="232" x2="868" y2="232" marker-end="url(#f-ah)"/>
-  <line class="sig" x1="735" y1="205" x2="735" y2="114" marker-end="url(#f-ah)"/>
-  <text class="lb" x="745" y="150">modo y consignas</text>
-  <line class="wl" x1="505" y1="260" x2="505" y2="343" marker-end="url(#f-ahc)"/>
-  <text class="lb c" x="497" y="305" text-anchor="end">HTTPS · resumen</text>
-  <rect class="box cloud" x="450" y="345" width="150" height="55" rx="4"/><text class="t" x="525" y="368">Gemini API</text><text class="s" x="525" y="385">JSON + texto a decir</text>
-  <polyline class="wl" points="600,372 735,372 735,262" marker-end="url(#f-ahc)"/>
-  <text class="lb c" x="612" y="364">decisión en JSON</text>
-  <polyline class="sig" points="900,260 900,470 735,470 735,483" marker-end="url(#f-ah)"/>
-  <text class="lb" x="890" y="465" text-anchor="end">voz (TTS)</text>
-  <rect class="box" x="660" y="485" width="150" height="50" rx="4"/><text class="t" x="735" y="506">Bocina</text><text class="s" x="735" y="522">el agente habla</text>
-  <line class="sig" x1="970" y1="260" x2="970" y2="483" marker-end="url(#f-ah)"/>
-  <text class="lb" x="978" y="400">WiFi</text>
-  <rect class="box" x="880" y="485" width="140" height="50" rx="4"/><text class="t" x="950" y="506">Celular y LCD</text><text class="s" x="950" y="522">dashboard · alertas</text>
-</svg>
-</div>
-<div class="dglegend" aria-hidden="true"><span><i class="sig"></i>siempre disponible</span><span><i class="wl"></i>solo con internet</span></div>
-<p class="small muted">Todo corre en la Pi como dos programas separados. El servicio de control mueve el panel y protege la batería, y no espera a nadie. El agente decide la estrategia, y lo que devuelve Gemini pasa por el validador antes de llegar al control.</p>
+<!-- ═══ DEMO ═══ -->
+<section class="demo">
+  <div class="in demo-in">
+    <div>
+      <p class="kicker">Gemelo digital</p>
+      <h2>Pruébala en siete situaciones.</h2>
+      <p class="sub">Siete situaciones en el navegador, y en realidad mixta con Meta Quest. Incluye un juego donde tú haces de agente durante 24 horas de emergencia.</p>
+      <a class="b b-sol" href="simulacion/">Abrir la simulación <span aria-hidden="true">→</span></a>
+    </div>
+    <ul class="chips">
+      <li><a href="simulacion/?escenario=soleado">☀ Día soleado</a></li>
+      <li><a href="simulacion/?escenario=amanecer">Amanecer</a></li>
+      <li><a href="simulacion/?escenario=nubes">Nubes pasajeras</a></li>
+      <li><a class="n" href="simulacion/?escenario=noche">☾ Noche de apagón</a></li>
+      <li><a class="r" href="simulacion/?escenario=bateria">Batería baja</a></li>
+      <li><a class="r" href="simulacion/?escenario=emergencia">Día de emergencia</a></li>
+      <li><a class="n" href="simulacion/?escenario=juego">Juego: tú eres el agente</a></li>
+    </ul>
+  </div>
+</section>
 
+<!-- ═══ PARA QUIÉN ═══ -->
+<section class="claro">
+  <div class="in">
+    <p class="kicker">Para quién</p>
+    <h2>Hecha para la gente que se queda sin luz.</h2>
+    <div class="quien">
+      <article><h3>Familias en zonas con cortes</h3><p>Sin capacitación: un interruptor para la luz, otro para el USB. La pantalla y la voz dicen si hay energía.</p></article>
+      <article><h3>Líderes comunitarios y brigadistas</h3><p>Deciden qué cargas atender y ven el estado desde el celular. Pueden configurar horarios.</p></article>
+      <article><h3>Escuelas y salones comunales</h3><p>Un docente a cargo decide qué se carga y ve el estado desde el celular. Cada día queda un registro de la energía.</p></article>
+    </div>
+  </div>
+</section>
 
-<h2 id="avance">Avance</h2>
-<ol class="tl">
-  <li><span class="n">Entrega 01 · sep</span><br><b>Bosquejos individuales.</b> Cada integrante propuso un proyecto; el equipo eligió el sistema solar para emergencias.</li>
-  <li><span class="n">Entrega 02 · 16 sep</span><br><b>Diagrama de bloques y BOM.</b> Primera arquitectura y lista de materiales bajo el tope de $200.000.</li>
-  <li><span class="n">Entrega 03 · sep</span><br><b>Diseño del dispositivo.</b> Esquemático y PCB en KiCad, y BOM corregido: 1 panel con seguidor, AGM 12 V, sin inversor.</li>
-  <li><span class="n">Entrega 04 · sep</span><br><b>Estándares y seguridad del hardware.</b> Normas para producir y vender, protección de la PCB, comercialización y alternativas.</li>
-  <li><span class="n">Entrega 05 · oct</span><br><b>Placa LED + pulsador</b> para la Raspberry Pi Zero 2 W y <a href="simulacion/">simulación 3D</a> con modo de realidad mixta.</li>
-  <li><span class="n">4 nov</span><br><b>Nueva arquitectura.</b> La Pi queda como único cómputo (sale el STM32), el seguidor pasa a un eje y el agente usa Gemini y habla por una bocina.</li>
-  <li class="now"><span class="n">Clase 19 · 5 nov</span><br><b><a href="requerimientos/">Requerimientos e historias de usuario</a></b>, con el tablero Kanban del desarrollo.</li>
-</ol>
+<!-- ═══ FICHA TÉCNICA ═══ -->
+<section class="claro ficha-sec" id="ficha">
+  <div class="in">
+    <p class="kicker">Especificaciones</p>
+    <h2>Ficha técnica.</h2>
+    <div class="ficha-t">
+      <dl><dt>Energía</dt>
+        <div><dt>Batería</dt><dd>AGM 12 V 7 Ah · 84 Wh (≈ 40 Wh útiles al 50 %)</dd></div>
+        <div><dt>Panel</dt><dd>20 W, 12 V</dd></div>
+        <div><dt>Generación</dt><dd>60–80 Wh/día con ~4 h de sol pico, antes de pérdidas</dd></div>
+        <div><dt>Controlador</dt><dd>Controlador de carga solar con salida de carga</dd></div>
+      </dl>
+      <dl><dt>Salidas</dt>
+        <div><dt>Luz</dt><dd>Lámpara LED 12 V</dd></div>
+        <div><dt>USB</dt><dd>2 puertos Quick Charge 3.0</dd></div>
+        <div><dt>Mando</dt><dd>3 interruptores físicos: luz, USB y voz</dd></div>
+      </dl>
+      <dl><dt>Inteligencia</dt>
+        <div><dt>Cómputo</dt><dd>Raspberry Pi Zero 2 W, siempre encendida (~1 W con Wi-Fi)</dd></div>
+        <div><dt>Agente</dt><dd>Gemini API, con reglas locales sin internet</dd></div>
+        <div><dt>Voz</dt><dd>Amplificador I²S y bocina de 3 W</dd></div>
+        <div><dt>Pantallas</dt><dd>LCD en la caja · panel web por Wi-Fi local</dd></div>
+      </dl>
+      <dl><dt>Seguimiento y sensores</dt>
+        <div><dt>Seguidor</dt><dd>1 eje este–oeste, servo MG996R</dd></div>
+        <div><dt>Sensores</dt><dd>2 LDR, potenciómetro del eje, INA226 (V e I), DS18B20 (temperatura)</dd></div>
+      </dl>
+      <dl><dt>Protección</dt>
+        <div><dt>Corte</dt><dd>Bajo voltaje en dos niveles: relé de la Pi y controlador de carga</dd></div>
+        <div><dt>Fusible</dt><dd>10 A</dd></div>
+      </dl>
+      <dl><dt>Físico</dt>
+        <div><dt>Caja</dt><dd>306 × 176 × 121 mm, con asa</dd></div>
+        <div><dt>Masa</dt><dd>≤ 8 kg en total; la batería sola ≈ 2 kg</dd></div>
+        <div><dt>Materiales</dt><dd>$181.990 COP por unidad de prototipo</dd></div>
+      </dl>
+    </div>
+    <p class="nota">* Valores de diseño del prototipo, tomados del <a href="requerimientos/">documento de requerimientos</a>. La autonomía de 4 h de lámpara con la Pi encendida toda la noche es la meta del REQNF 001 y se verificará en pruebas de 24–72 h al aire libre.</p>
+  </div>
+</section>
 
-<h2 id="simulacion">Simulación 3D</h2>
-<div class="card">
-  <p>Gemelo 3D en el navegador con siete situaciones: día soleado, amanecer, nubes, noche de apagón, batería baja, día de emergencia y un juego en el que uno hace de agente. Funciona en Meta Quest en modo de realidad mixta.</p>
-  <p class="small muted">Muestra todavía la arquitectura anterior (seguidor de 2 ejes y STM32); actualizarla está en el Kanban.</p>
-  <a class="btn primary" href="simulacion/">Abrir la simulación</a>
-</div>
+<!-- ═══ PREGUNTAS ═══ -->
+<section class="claro preguntas" id="preguntas">
+  <div class="in">
+    <p class="kicker">Preguntas</p>
+    <h2>Lo que nos preguntan.</h2>
+    <div class="faq">
+      <details><summary>¿Necesita internet?</summary><p>No. La luz, el USB, la protección de la batería y el seguimiento del sol funcionan sin red. El internet solo sirve para que el agente consulte a Gemini; sin él decide con reglas locales.</p></details>
+      <details><summary>¿Qué pasa si la batería se baja demasiado?</summary><p>Se corta sola, en dos niveles. Primero la Raspberry Pi apaga las cargas con un relé; si eso fallara, el controlador de carga corta por su cuenta. Así la batería AGM no se daña.</p></details>
+      <details><summary>¿Alcanza un día de sol para llenarla?</summary><p>Con unas 4 horas de sol pico, el panel entrega 60–80 Wh antes de pérdidas, más que los ≈ 40 Wh útiles de la batería. En días nublados el agente ajusta el consumo para que la luz alcance.</p></details>
+      <details><summary>¿La puedo controlar a mano?</summary><p>Siempre. Los interruptores del frente mandan sobre el agente: si quieres la luz encendida, se enciende.</p></details>
+      <details><summary>¿Cuánto cuesta? ¿Dónde la compro?</summary><p>Todavía no se vende: Solar es un prototipo de la Universidad Nacional de Colombia. Los materiales cuestan $181.990 COP, dentro del tope de $200.000 del curso.</p></details>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CIERRE ═══ -->
+<section class="cierre">
+  <div class="in">
+    <h2>Energía que no depende de la red.</h2>
+    <p class="sub">Solar está en desarrollo. Mira cómo se diseña, quién la hace y en qué va.</p>
+    <div class="acciones">
+      <a class="b b-sol" href="simulacion/">Pruébala en 3D <span aria-hidden="true">→</span></a>
+      <a class="b b-linea" href="proyecto/">El proyecto y el equipo</a>
+      <a class="b b-linea" href="requerimientos/">Requerimientos</a>
+    </div>
+  </div>
+</section>
 </main>
 
-<footer>
-  <div class="wrap">
-    Diseño de Sistemas Electrónicos · Departamento de Ingeniería Eléctrica y Electrónica · Universidad Nacional de Colombia · 2026-2.
+<footer class="pie">
+  <div class="in">
+    <a class="marca" href="./">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3.5 13a8.5 8.5 0 0 1 17 0" stroke="#F59E0B" stroke-width="1.6" stroke-dasharray="2.4 2.4" stroke-linecap="round"/><path d="M4.5 15L19.5 9.6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M12 12.3V20M8 20h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="12.3" r="2.1" fill="#F59E0B"/></svg>
+      SOLAR
+    </a>
+    <p>Prototipo académico de Diseño de Sistemas Electrónicos 2026-2 · Departamento de Ingeniería Eléctrica y Electrónica · Universidad Nacional de Colombia. Equipo: Ivy Sofía González Varela, José Luis Ocoró Banguera, Miguel Ángel López Pinto y Álvaro Chaves Ladino.</p>
+    <nav aria-label="Más"><a href="proyecto/">El proyecto</a><a href="requerimientos/">Requerimientos</a><a href="simulacion/">Simulación 3D</a><a href="https://app.kanbanchi.com/dashboard/5922080451592192-6139501359792128/d-6139501359792128">Kanban</a></nav>
   </div>
 </footer>
 </body>

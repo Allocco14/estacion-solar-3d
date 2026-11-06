@@ -3,10 +3,13 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="theme-color" content="#0c1517" />
+<meta name="theme-color" content="#0B0F14" />
 <meta name="description" content="Simulación 3D de la estación solar portátil para emergencias (DSE 2026-2): seguidor de 2 ejes, caja de control con Raspberry Pi Zero 2 W y STM32, y seis situaciones para explorar." />
 <title>Estación Solar 3D</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230f2226'/%3E%3Ccircle cx='32' cy='30' r='11' fill='%23f5b84a'/%3E%3Cpath d='M14 50h36' stroke='%235fd3b5' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230B0F14'/%3E%3Cpath d='M6 17a10 10 0 0 1 20 0' fill='none' stroke='%23F59E0B' stroke-width='2' stroke-dasharray='3 3' stroke-linecap='round'/%3E%3Cpath d='M7 19.5L25 13' stroke='%23ECF2F8' stroke-width='2.6' stroke-linecap='round'/%3E%3Cpath d='M16 16v9M11 25h10' stroke='%23ECF2F8' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='16' r='2.6' fill='%23F59E0B'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script type="importmap">
 {
   "imports": {
@@ -17,28 +20,28 @@
 </script>
 <style>
 :root {
-  --bg: #0c1517;
-  --panel: rgba(13, 24, 27, 0.84);
-  --panel-solid: #111f23;
+  --bg: #0B0F14;
+  --panel: rgba(18, 25, 34, 0.86);
+  --panel-solid: #121922;
   --line: rgba(255, 255, 255, 0.10);
   --line-strong: rgba(255, 255, 255, 0.18);
-  --text: #e7f0ed;
-  --muted: #9bb0aa;
-  --faint: #6f847e;
-  --accent: #f5b84a;
+  --text: #ECF2F8;
+  --muted: #8D9BAE;
+  --faint: #5B6B7F;
+  --accent: #F59E0B;
   --accent-ink: #1c1405;
   --teal: #5fd3b5;
   --blue: #6aa8ff;
   --green: #7ee08a;
   --red: #ff7a6b;
-  --radius: 14px;
+  --radius: 6px;
   --gutter: 16px;
   --scene-h: 100svh;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--text);
-  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+  font: 14px/1.45 "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
 button, select, input { font: inherit; color: inherit; }
 button { cursor: pointer; }
 #scene { position: fixed; inset: 0 0 auto 0; width: 100%; height: var(--scene-h); display: block; touch-action: none; outline: none; }
@@ -46,14 +49,14 @@ button { cursor: pointer; }
 .topbar { position: fixed; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 12px;
   padding: 12px var(--gutter); pointer-events: none; z-index: 5; }
 .brand { display: flex; align-items: center; gap: 10px; pointer-events: auto; min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 5px 12px 5px 5px; backdrop-filter: blur(10px); }
-.brand-mark { width: 36px; height: 36px; border-radius: 10px; background: #0f2226; border: 1px solid var(--line-strong);
+.brand-mark { width: 36px; height: 36px; border-radius: 4px; background: #0B0F14; border: 1px solid var(--line-strong);
   display: grid; place-items: center; flex: none; }
-.brand h1 { margin: 0; font-size: 15px; font-weight: 650; letter-spacing: .01em; white-space: nowrap; }
+.brand h1 { margin: 0; font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif; font-size: 15px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
 .brand p { margin: 0; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .brand-text { min-width: 0; }
 .clock { margin: 0 auto; pointer-events: auto; display: flex; align-items: center; gap: 10px; background: var(--panel);
   border: 1px solid var(--line); border-radius: 999px; padding: 6px 8px 6px 14px; backdrop-filter: blur(10px); }
-.clock .time { font-variant-numeric: tabular-nums; font-size: 18px; font-weight: 650; }
+.clock .time { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; font-size: 18px; font-weight: 600; }
 .clock .meta { font-size: 12px; color: var(--muted); }
 .header-actions { display: flex; gap: 8px; pointer-events: auto; }
 .icon-btn { height: 36px; min-width: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line-strong);
@@ -207,10 +210,10 @@ kbd { font: 12px ui-monospace, monospace; background: rgba(255,255,255,.08); bor
 <header class="topbar">
   <div class="brand">
     <div class="brand-mark" aria-hidden="true">
-      <svg width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="11" r="5" fill="#f5b84a"/><path d="M3 20h18" stroke="#5fd3b5" stroke-width="2.4" stroke-linecap="round"/></svg>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3.5 13a8.5 8.5 0 0 1 17 0" stroke="#F59E0B" stroke-width="1.6" stroke-dasharray="2.4 2.4" stroke-linecap="round"/><path d="M4.5 15L19.5 9.6" stroke="#ECF2F8" stroke-width="2.2" stroke-linecap="round"/><path d="M12 12.3V20M8 20h8" stroke="#ECF2F8" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="12.3" r="2.1" fill="#F59E0B"/></svg>
     </div>
     <div class="brand-text">
-      <h1>Estación Solar 3D</h1>
+      <h1>Solar · 3D</h1>
       <p>DSE 2026-2 · seguidor de 2 ejes + caja de control</p>
     </div>
   </div>

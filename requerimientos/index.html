@@ -3,23 +3,31 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Requerimientos · Estación solar</title>
+<title>Requerimientos · Solar</title>
 <meta name="description" content="Solicitudes, requerimientos funcionales y no funcionales, restricciones, atributos de calidad, historias de usuario y tablero Kanban de la estación solar portátil para emergencias (DSE 2026-2).">
+<meta name="theme-color" content="#0B0F14">
+<script>try { if (localStorage.getItem("tema") === "light") document.documentElement.dataset.theme = "light"; } catch (e) {}</script>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230B0F14'/%3E%3Cpath d='M6 17a10 10 0 0 1 20 0' fill='none' stroke='%23F59E0B' stroke-width='2' stroke-dasharray='3 3' stroke-linecap='round'/%3E%3Cpath d='M7 19.5L25 13' stroke='%23ECF2F8' stroke-width='2.6' stroke-linecap='round'/%3E%3Cpath d='M16 16v9M11 25h10' stroke='%23ECF2F8' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='16' r='2.6' fill='%23F59E0B'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;600;700&family=Public+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../estilo.css">
 </head>
 <body>
 <header class="top">
   <div class="wrap">
-    <a class="brand" href="../"><span class="dot"></span>Estación solar</a>
+    <a class="brand" href="../">
+      <svg class="brand-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3.5 13a8.5 8.5 0 0 1 17 0" stroke="var(--sun-fill)" stroke-width="1.6" stroke-dasharray="2.4 2.4" stroke-linecap="round"/><path d="M4.5 15L19.5 9.6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M12 12.3V20M8 20h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="12.3" r="2.1" fill="var(--sun-fill)"/></svg>
+      Solar <span class="ver">DSE 26-2</span>
+    </a>
     <nav>
-      <a href="../">Proyecto</a>
+      <a href="../">Producto</a>
+      <a href="../proyecto/">Proyecto</a>
       <a href="./" aria-current="page">Requerimientos</a>
       <a href="https://app.kanbanchi.com/dashboard/5922080451592192-6139501359792128/d-6139501359792128">Kanban</a>
       <a href="../simulacion/">Simulación 3D</a>
     </nav>
+    <button class="theme-btn" type="button" aria-label="Cambiar entre modo oscuro y claro"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.8a6.2 6.2 0 0 1 0 12.4z" fill="currentColor"/></svg><span>Tema</span></button>
   </div>
 </header>
 
@@ -29,25 +37,23 @@
   <h1>Documento de requerimientos</h1>
   <p class="lede">Sistema portátil inteligente de energía solar para emergencias. A partir del diagrama de bloques detallado se listan las solicitudes, los requerimientos funcionales y no funcionales, las restricciones, los atributos de calidad y las historias de usuario. El tablero Kanban sale de las historias.</p>
   <p class="small muted">Equipo: Ivy Sofía González Varela · José Luis Ocoró Banguera · Miguel Ángel López Pinto (Scrum Master) · Álvaro Chaves Ladino. Versión 1.1 · 5 de noviembre de 2026.</p>
-  <div class="tw noprint" style="max-width:640px">
-    <table>
-      <tr><th>Sección</th><th>Códigos</th><th>Cant.</th></tr>
-      <tr><td><a href="#arquitectura">1. Diagrama de bloques detallado</a></td><td class="mono">—</td><td>2</td></tr>
-      <tr><td><a href="#usuarios">2. Usuarios</a></td><td class="mono">—</td><td>4</td></tr>
-      <tr><td><a href="#solicitudes">3. Solicitudes</a></td><td class="mono">SOL 001–024</td><td>24</td></tr>
-      <tr><td><a href="#funcionales">4. Requerimientos funcionales</a></td><td class="mono">REQ 001–015</td><td>15</td></tr>
-      <tr><td><a href="#no-funcionales">5. Requerimientos no funcionales</a></td><td class="mono">REQNF 001–006</td><td>6</td></tr>
-      <tr><td><a href="#restricciones">6. Restricciones</a></td><td class="mono">REST 001–009</td><td>9</td></tr>
-      <tr><td><a href="#calidad">7. Atributos de calidad</a></td><td class="mono">ATRI-CAL 001–008</td><td>8</td></tr>
-      <tr><td><a href="#historias">8. Historias de usuario</a></td><td class="mono">HU-001–030</td><td>30</td></tr>
-      <tr><td><a href="#kanban">9. Tablero Kanban</a></td><td class="mono">—</td><td>—</td></tr>
-    </table>
-  </div>
-  <p class="noprint"><a class="btn" href="requerimientos.pdf">Descargar PDF</a></p>
+  <p class="noprint"><a class="btn primary" href="requerimientos.pdf">Descargar PDF <span class="arr" aria-hidden="true">↓</span></a></p>
+  <ol class="indice noprint" aria-label="Contenido">
+    <li class="head" aria-hidden="true"><span class="n">#</span><span class="t">Sección</span><span class="c">Códigos</span><span class="q">Cant.</span></li>
+    <li><a href="#arquitectura"><span class="n">01</span><span class="t">Diagrama de bloques detallado</span><span class="c"></span><span class="q">2</span></a></li>
+    <li><a href="#usuarios"><span class="n">02</span><span class="t">Usuarios</span><span class="c"></span><span class="q">4</span></a></li>
+    <li><a href="#solicitudes"><span class="n">03</span><span class="t">Solicitudes</span><span class="c">SOL 001–024</span><span class="q">24</span></a></li>
+    <li><a href="#funcionales"><span class="n">04</span><span class="t">Requerimientos funcionales</span><span class="c">REQ 001–015</span><span class="q">15</span></a></li>
+    <li><a href="#no-funcionales"><span class="n">05</span><span class="t">Requerimientos no funcionales</span><span class="c">REQNF 001–006</span><span class="q">6</span></a></li>
+    <li><a href="#restricciones"><span class="n">06</span><span class="t">Restricciones</span><span class="c">REST 001–009</span><span class="q">9</span></a></li>
+    <li><a href="#calidad"><span class="n">07</span><span class="t">Atributos de calidad</span><span class="c">ATRI-CAL 001–008</span><span class="q">8</span></a></li>
+    <li><a href="#historias"><span class="n">08</span><span class="t">Historias de usuario</span><span class="c">HU-001–030</span><span class="q">30</span></a></li>
+    <li><a href="#kanban"><span class="n">09</span><span class="t">Tablero Kanban</span><span class="c"></span><span class="q">—</span></a></li>
+  </ol>
 </section>
 
 <!-- ================================================================ -->
-<h2 id="arquitectura" class="keep">1. Diagrama de bloques detallado</h2>
+<h2 id="arquitectura" class="keep"><span class="num">01</span>Diagrama de bloques detallado</h2>
 <p>Es la arquitectura que acordó el equipo el 4 de noviembre de 2026. La <b>Raspberry Pi Zero 2 W</b> es el único cómputo: el STM32 salió del diseño. El panel es de 20 W en un seguidor de un eje, el agente usa la API de Gemini y una bocina le da voz. Como la Pi no tiene entradas analógicas ni salida de audio, se agregan un <b>ADS1115</b> y un <b>MAX98357A</b>. Son los dos diagramas que acordó el equipo: el de hardware (qué está conectado con qué y por dónde va la energía) y el de flujo de información (qué pasa con cada dato hasta que el panel se mueve, una carga se apaga o el agente habla).</p>
 <h3 class="keep">Hardware</h3>
 <div class="dgwrap">
@@ -202,7 +208,7 @@
 </div>
 
 <!-- ================================================================ -->
-<h2 id="usuarios" class="keep">2. Usuarios del sistema</h2>
+<h2 id="usuarios" class="keep"><span class="num">02</span>Usuarios del sistema</h2>
 <div class="tw">
 <table>
   <tr><th>Rol</th><th>Quién es</th><th>Qué necesita</th></tr>
@@ -214,7 +220,7 @@
 </div>
 
 <!-- ================================================================ -->
-<h2 id="solicitudes" class="keep">3. Solicitudes</h2>
+<h2 id="solicitudes" class="keep"><span class="num">03</span>Solicitudes</h2>
 <p>Las solicitudes vienen de la propuesta del equipo (<i>Sistema Portátil Inteligente de Energía Solar para Emergencias</i>), de las indicaciones del profesor en clase y de las discusiones del equipo, la última el 4 de noviembre. La columna <b>Origen</b> indica de dónde salió cada una.</p>
 <div class="tw">
 <table>
@@ -247,7 +253,7 @@
 </div>
 
 <!-- ================================================================ -->
-<h2 id="funcionales" class="pb">4. Requerimientos funcionales</h2>
+<h2 id="funcionales" class="pb"><span class="num">04</span>Requerimientos funcionales</h2>
 <p>Un requerimiento funcional es un comportamiento del sistema que el usuario puede ver. La <b>importancia</b> ordena el desarrollo: primero va lo que protege la batería y a las personas.</p>
 
 <div class="ficha k-func"><div class="fh"><span class="code">REQ 001</span><span class="name">Carga solar de la batería</span><span class="tag t-alta">ALTA</span></div>
@@ -398,7 +404,7 @@
 </div>
 
 <!-- ================================================================ -->
-<h2 id="no-funcionales" class="keep">5. Requerimientos no funcionales</h2>
+<h2 id="no-funcionales" class="keep"><span class="num">05</span>Requerimientos no funcionales</h2>
 <p>Fijan cómo se evalúa la operación del sistema y no son directamente visibles para el usuario. Los valores marcados <span class="tag t-info">META</span> son metas de diseño que se validan en las pruebas.</p>
 
 <div class="ficha k-nf"><div class="fh"><span class="code">REQNF 001</span><span class="name">Autonomía y balance de energía</span></div>
@@ -458,7 +464,7 @@
 </div>
 
 <!-- ================================================================ -->
-<h2 id="restricciones" class="keep">6. Restricciones</h2>
+<h2 id="restricciones" class="keep"><span class="num">06</span>Restricciones</h2>
 <p>Reglas técnicas que el desarrollo debe cumplir. Dentro del curso no se negocian.</p>
 
 <div class="ficha k-rest"><div class="fh"><span class="code">REST 001</span><span class="name">Presupuesto máximo</span></div>
@@ -547,7 +553,7 @@
 </div>
 
 <!-- ================================================================ -->
-<h2 id="calidad" class="keep">7. Atributos de calidad</h2>
+<h2 id="calidad" class="keep"><span class="num">07</span>Atributos de calidad</h2>
 <p>Propiedades del producto con las que el usuario decide si lo acepta o lo rechaza.</p>
 
 <div class="ficha k-cal"><div class="fh"><span class="code">ATRI-CAL 001</span><span class="name">Seguridad</span></div>
@@ -628,7 +634,7 @@
 </div>
 
 <!-- ================================================================ -->
-<h2 id="historias" class="pb">8. Historias de usuario</h2>
+<h2 id="historias" class="pb"><span class="num">08</span>Historias de usuario</h2>
 <p>La numeración sigue la prioridad del requerimiento. Cada historia tiene un criterio de aceptación verificable: es la prueba que la pasa a <i>Hecho</i> en el Kanban.</p>
 
 <div class="hu-head"><span class="code">REQ 006</span><h3 style="margin:0">Corte por bajo voltaje</h3><span class="tag t-alta">Prioridad 1</span></div>
@@ -727,7 +733,7 @@
 </table></div>
 
 <!-- ================================================================ -->
-<h2 id="kanban" class="pb">9. Tablero Kanban</h2>
+<h2 id="kanban" class="pb"><span class="num">09</span>Tablero Kanban</h2>
 <p>Estado al 5 de noviembre de 2026. Scrum Master: Miguel Ángel López Pinto. Cada historia es una tarjeta, y una tarjeta pasa de <i>En pruebas</i> a <i>Hecho</i> solo si cumple el criterio de aceptación de su historia.</p>
 <p class="note">El tablero del equipo está en Kanbanchi: <a href="https://app.kanbanchi.com/dashboard/5922080451592192-6139501359792128/d-6139501359792128">abrir el tablero</a>. Ahí se siguen las historias de usuario (HU-001 a HU-030) y las tareas de diseño.</p>
 
@@ -745,6 +751,12 @@
     Diseño de Sistemas Electrónicos · Universidad Nacional de Colombia · 2026-2. Documento elaborado por el equipo con asistencia de Claude (Anthropic).
   </div>
 </footer>
-
+<script>
+  document.querySelector(".theme-btn").addEventListener("click", function () {
+    var r = document.documentElement, claro = r.dataset.theme !== "light";
+    if (claro) r.dataset.theme = "light"; else delete r.dataset.theme;
+    try { localStorage.setItem("tema", claro ? "light" : "dark"); } catch (e) {}
+  });
+</script>
 </body>
 </html>

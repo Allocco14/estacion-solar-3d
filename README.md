@@ -6,15 +6,17 @@ Página del proyecto Solar del curso Diseño de Sistemas Electrónicos (DSE 2026
 
 | Ruta | Qué es |
 |---|---|
-| [`index.html`](index.html) | Portada: el proyecto, el equipo, la arquitectura, el avance |
+| [`index.html`](index.html) | Portada de producto de **Solar**: hero con el render 3D ([`producto3d.js`](producto3d.js), three.js; `?modo=noche` abre de noche), características, ficha técnica y preguntas. Estilo en [`producto.css`](producto.css) |
+| [`proyecto/`](proyecto/) | Página del curso: el equipo, la arquitectura (diagramas) y el avance |
 | [`requerimientos/`](requerimientos/) | Diagramas de bloques (hardware y flujo de información, del artifact del equipo), solicitudes, requerimientos, restricciones, atributos de calidad e historias de usuario (clase 19). Se imprime a PDF |
 | [`simulacion/`](simulacion/) | Simulación 3D (three.js + WebXR). Ver su [README](simulacion/README.md) |
-| [`estilo.css`](estilo.css) | Estilo compartido, con modo claro y oscuro |
+| [`estilo.css`](estilo.css) | Estilo de `proyecto/` y `requerimientos/`, oscuro por defecto y claro con el botón Tema; al imprimir siempre claro |
 
 ## Actualizar
 
 - **Kanban:** está en Kanbanchi, enlazado desde la página de requerimientos.
-- **Roles del equipo:** en `index.html`, sección `#equipo`.
+- **Roles del equipo:** en `proyecto/index.html`, sección `#equipo` (atributo `data-rol`; vacío no se muestra).
+- **Datos de la portada:** salen del documento de requerimientos; si cambian ahí, se cambian en `index.html` (cifras, ficha técnica, preguntas).
 
 ## Verlo localmente
 
@@ -23,7 +25,7 @@ cd sitio
 python -m http.server 8080
 ```
 
-Y se abre <http://localhost:8080/>. La portada y los requerimientos también abren directo desde el archivo. La simulación necesita HTTP.
+Y se abre <http://localhost:8080/>. `proyecto/` y los requerimientos también abren directo desde el archivo. La portada (render 3D) y la simulación necesitan HTTP.
 
 ## Publicación
 
