@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Solar · Energía solar para cuando se va la luz</title>
-<meta name="description" content="Solar: estación solar portátil con seguimiento del sol, batería de 84 Wh, luz LED, carga USB y un agente que reparte la energía y avisa en voz alta. Prototipo de DSE 2026-2, Universidad Nacional de Colombia.">
+<title>Solar Saver · Energía solar para cuando se va la luz</title>
+<meta name="description" content="Solar Saver: estación solar portátil con seguimiento del sol, batería de 84 Wh, luz LED, carga USB y un agente que reparte la energía y avisa en voz alta. Prototipo de DSE 2026-2, Universidad Nacional de Colombia.">
 <meta name="theme-color" content="#0B0F14">
 <script>
   // Enlaces viejos a la simulación (?escenario=…) siguen funcionando.
@@ -27,9 +27,9 @@
 
 <header class="nav">
   <div class="in">
-    <a class="marca" href="./" aria-label="Solar, inicio">
+    <a class="marca" href="./" aria-label="Solar Saver, inicio">
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3.5 13a8.5 8.5 0 0 1 17 0" stroke="#F59E0B" stroke-width="1.6" stroke-dasharray="2.4 2.4" stroke-linecap="round"/><path d="M4.5 15L19.5 9.6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M12 12.3V20M8 20h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="12.3" r="2.1" fill="#F59E0B"/></svg>
-      SOLAR
+      SOLAR <b>SAVER</b>
     </a>
     <nav aria-label="Secciones">
       <a href="#noche">Cómo funciona</a>
@@ -47,7 +47,7 @@
   <div class="in hero-in">
     <div class="hero-txt">
       <p class="kicker">Estación solar portátil para emergencias</p>
-      <h1>Cuando se va la luz, <span>Solar no.</span></h1>
+      <h1>Cuando se va la luz, <span>Solar&nbsp;Saver no.</span></h1>
       <p class="sub">Se carga sola con el sol, ilumina la noche y mantiene cargados los celulares. Y un agente inteligente reparte la energía para que alcance hasta el amanecer, y te avisa en voz alta cuando algo pasa.</p>
       <div class="acciones">
         <a class="b b-sol" href="simulacion/">Pruébala en 3D <span aria-hidden="true">→</span></a>
@@ -80,7 +80,7 @@
     <p class="kicker">Así funciona</p>
     <h2>Una noche sin red, contada por horas.</h2>
     <ol class="horas">
-      <li><time>18:00</time><h3>Se va la luz. Solar no.</h3><p>A su hora se enciende la lámpara LED de 12 V. Y si prefieres, la mandas tú con un interruptor físico.</p></li>
+      <li><time>18:00</time><h3>Se va la luz. Solar Saver no.</h3><p>A su hora se enciende la lámpara LED de 12 V. Y si prefieres, la mandas tú con un interruptor físico.</p></li>
       <li><time>19:00</time><h3>Dos celulares cargando.</h3><p>Dos puertos USB con carga rápida QC 3.0 para que la familia siga comunicada.</p></li>
       <li><time>22:00</time><h3>Hace las cuentas por ti.</h3><p>El agente mira cuánta energía queda y cuánta falta para el amanecer. Si no alcanza, te lo dice en voz alta y prioriza la luz.</p></li>
       <li><time>05:30</time><h3>Amanece. Ya está mirando al este.</h3><p>El panel giró durante la noche para recibir el primer sol. A lo largo del día lo sigue hasta el oeste.</p></li>
@@ -139,7 +139,7 @@
   <div class="in split">
     <div>
       <p class="kicker">Inteligente, pero no frágil</p>
-      <h2>Si se cae el internet, Solar sigue igual.</h2>
+      <h2>Si se cae el internet, Solar Saver sigue igual.</h2>
       <p class="sub">Adentro corren dos programas separados. El de control protege la batería y mueve el panel cada 1 a 2 segundos, y no espera a nadie. El agente consulta a Gemini cada 15 minutos; sin red decide con reglas locales. Y un validador revisa cada decisión antes de que llegue al control.</p>
       <a class="enlace" href="proyecto/#arquitectura">Ver la arquitectura completa →</a>
     </div>
@@ -236,7 +236,7 @@
       <details><summary>¿Qué pasa si la batería se baja demasiado?</summary><p>Se corta sola, en dos niveles. Primero la Raspberry Pi apaga las cargas con un relé; si eso fallara, el controlador de carga corta por su cuenta. Así la batería AGM no se daña.</p></details>
       <details><summary>¿Alcanza un día de sol para llenarla?</summary><p>Con unas 4 horas de sol pico, el panel entrega 60–80 Wh antes de pérdidas, más que los ≈ 40 Wh útiles de la batería. En días nublados el agente ajusta el consumo para que la luz alcance.</p></details>
       <details><summary>¿La puedo controlar a mano?</summary><p>Siempre. Los interruptores del frente mandan sobre el agente: si quieres la luz encendida, se enciende.</p></details>
-      <details><summary>¿Cuánto cuesta? ¿Dónde la compro?</summary><p>Todavía no se vende: Solar es un prototipo de la Universidad Nacional de Colombia. Los materiales cuestan $181.990 COP, dentro del tope de $200.000 del curso.</p></details>
+      <details><summary>¿Cuánto cuesta? ¿Dónde la compro?</summary><p>Todavía no se vende: Solar Saver es un prototipo de la Universidad Nacional de Colombia. Los materiales cuestan $181.990 COP, dentro del tope de $200.000 del curso.</p></details>
     </div>
   </div>
 </section>
@@ -245,7 +245,7 @@
 <section class="cierre">
   <div class="in">
     <h2>Energía que no depende de la red.</h2>
-    <p class="sub">Solar está en desarrollo. Mira cómo se diseña, quién la hace y en qué va.</p>
+    <p class="sub">Solar Saver está en desarrollo. Mira cómo se diseña, quién la hace y en qué va.</p>
     <div class="acciones">
       <a class="b b-sol" href="simulacion/">Pruébala en 3D <span aria-hidden="true">→</span></a>
       <a class="b b-linea" href="proyecto/">El proyecto y el equipo</a>
@@ -259,7 +259,7 @@
   <div class="in">
     <a class="marca" href="./">
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3.5 13a8.5 8.5 0 0 1 17 0" stroke="#F59E0B" stroke-width="1.6" stroke-dasharray="2.4 2.4" stroke-linecap="round"/><path d="M4.5 15L19.5 9.6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M12 12.3V20M8 20h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="12.3" r="2.1" fill="#F59E0B"/></svg>
-      SOLAR
+      SOLAR <b>SAVER</b>
     </a>
     <p>Prototipo académico de Diseño de Sistemas Electrónicos 2026-2 · Departamento de Ingeniería Eléctrica y Electrónica · Universidad Nacional de Colombia. Equipo: Ivy Sofía González Varela, José Luis Ocoró Banguera, Miguel Ángel López Pinto y Álvaro Chaves Ladino.</p>
     <nav aria-label="Más"><a href="proyecto/">El proyecto</a><a href="requerimientos/">Requerimientos</a><a href="simulacion/">Simulación 3D</a><a href="https://app.kanbanchi.com/dashboard/5922080451592192-6139501359792128/d-6139501359792128">Kanban</a></nav>

@@ -2,11 +2,11 @@
 
 **Sitio:** <https://allocco14.github.io/estacion-solar-3d/>
 
-Página del proyecto Solar del curso Diseño de Sistemas Electrónicos (DSE 2026-2, Universidad Nacional de Colombia). Es HTML estático, sin compilar.
+Página del proyecto Solar Saver del curso Diseño de Sistemas Electrónicos (DSE 2026-2, Universidad Nacional de Colombia). Es HTML estático, sin compilar.
 
 | Ruta | Qué es |
 |---|---|
-| [`index.html`](index.html) | Portada de producto de **Solar**: hero con el render 3D ([`producto3d.js`](producto3d.js), three.js; `?modo=noche` abre de noche), características, ficha técnica y preguntas. Estilo en [`producto.css`](producto.css) |
+| [`index.html`](index.html) | Portada de producto de **Solar Saver**: hero con el render 3D ([`producto3d.js`](producto3d.js), three.js; `?modo=noche` abre de noche), características, ficha técnica y preguntas. Estilo en [`producto.css`](producto.css) |
 | [`proyecto/`](proyecto/) | Página del curso: el equipo, la arquitectura (diagramas) y el avance |
 | [`requerimientos/`](requerimientos/) | Diagramas de bloques (hardware y flujo de información, del artifact del equipo), solicitudes, requerimientos, restricciones, atributos de calidad e historias de usuario (clase 19). Se imprime a PDF |
 | [`simulacion/`](simulacion/) | Simulación 3D (three.js + WebXR). Ver su [README](simulacion/README.md) |

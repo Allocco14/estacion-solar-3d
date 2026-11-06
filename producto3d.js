@@ -100,7 +100,7 @@ function iniciar(host) {
   // pantalla LCD (textura de lienzo)
   const lcd = lienzo(512, 224, (c, w, h, noche) => {
     c.fillStyle = noche ? "#0a1a26" : "#081520"; c.fillRect(0, 0, w, h);
-    c.fillStyle = "#5cc8ff"; c.font = "600 30px 'IBM Plex Mono', monospace"; c.fillText("SOLAR", 30, 52);
+    c.fillStyle = "#5cc8ff"; c.font = "600 30px 'IBM Plex Mono', monospace"; c.fillText("SOLAR SAVER", 30, 52);
     c.fillStyle = noche ? "#f5b043" : "#5cc8ff"; c.font = "500 24px 'IBM Plex Mono', monospace";
     c.fillText(noche ? "● LUZ  ● USB" : "☀ CARGANDO", 300, 52);
     c.strokeStyle = "#5cc8ff"; c.lineWidth = 6; c.strokeRect(32, 90, 380, 100); c.fillStyle = "#5cc8ff"; c.fillRect(414, 120, 14, 40);
