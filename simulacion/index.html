@@ -359,7 +359,7 @@ kbd { font: 12px ui-monospace, monospace; background: rgba(255,255,255,.08); bor
     <ul>
       <li><strong>+10</strong> por celular cargado al 80 %, <strong>+10</strong> por hora de lámpara entre 18:00 y 22:00 y <strong>+3</strong> por nube apartada.</li>
       <li><strong>−30</strong> por cada corte por bajo voltaje. <strong>+20</strong> si amaneces con la batería al 40 % o más, lista para el otro día.</li>
-      <li>El agente (la Raspberry Pi) te dice si alcanza la energía para la noche antes de aceptar un celular.</li>
+      <li>El agente de la Raspberry Pi, un árbol de decisión que no usa internet, te dice si aceptar cada celular y cuándo ahorrar. Entre paréntesis va la hoja del árbol (H1–H10) y el modo.</li>
     </ul>
     <h3>Realidad mixta (Meta Quest)</h3>
     <ul>
@@ -408,6 +408,7 @@ kbd { font: 12px ui-monospace, monospace; background: rgba(255,255,255,.08); bor
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { XRControllerModelFactory } from 'three/addons/webxr/XRControllerModelFactory.js';
+import { decidir } from './arbol.js';
 
 /* ───────── utilidades ───────── */
 const $ = (s) => document.querySelector(s);
@@ -1177,27 +1178,27 @@ function acceptReq() {
   addLog('Celular conectado' + (S.usb ? '' : ': enciende el USB')); syncControls();
 }
 function rejectReq() { if (!G.req) return; G.req = null; G.rejected++; addLog('Pedido rechazado'); }
-// consejo del agente (la RPi): balance de energía hasta el amanecer
+// estado que ve el agente: el mismo resumen que arma la Pi
+function agentState() {
+  const n = S.phones.length;
+  const pend = n ? S.phones.reduce((a, p) => a + Math.max(0, GAME.phoneDone - p.soc), 0) / n : 0;
+  return { hora: S.t % 24, soc: S.soc, p_panel_w: S.Pavail, p_cargas_w: S.Pload, temp_bat_c: S.temp,
+    celulares: n, carga_pendiente: pend, pedido_celular: !!G.req, corte_activo: S.lvd };
+}
+const agentDecision = () => decidir(agentState());
+// consejo del agente: el árbol de decisión de proyecto/agente (arbol.js)
 function agentHint() {
   if (!G.on || G.final || !S.sun) return '';
-  const h = S.t % 24;
-  if (S.lvd) return 'Corte por bajo voltaje: todo queda apagado hasta que el sol recargue la batería.';
+  const h = S.t % 24, d = agentDecision(), tag = 'Agente (' + d.hoja + ' · ' + d.modo + '): ';
+  if (S.lvd) return tag + d.texto;
   if (cloudBlocks()) return 'Una nube tapa el panel: apártala.';
-  const evening = h >= 16 || h < 6;
-  const toDawn = evening ? (6 - h + 24) % 24 : 0;
-  const lampLeft = !evening || h >= GAME.lampTo || h < 6 ? 0 : GAME.lampTo - Math.max(h, GAME.lampFrom);
-  const phonesWh = S.phones.reduce((a, p) => a + Math.max(0, GAME.phoneDone - p.soc) * P.phoneWh / P.etaUsb, 0);
-  const need = lampLeft * P.lamp + toDawn * 1.4 + phonesWh;
-  const avail = Math.max(0, S.soc - 0.25) * P.cap * 12;
-  if (G.req) {
-    if (S.phones.length >= 2) return 'Agente: los 2 USB están ocupados; espera a que termine un celular.';
-    if (!evening && S.Pavail > 5) return 'Agente: hay sol de sobra, acepta el celular.';
-    return avail - need > 13 ? 'Agente: alcanza la energía, puedes aceptarlo.' : 'Agente: si lo aceptas no alcanza para la noche. Mejor recházalo.';
-  }
-  if (h >= GAME.lampFrom && h < GAME.lampTo && !S.lamp) return 'El barrio necesita luz de 18:00 a 22:00: enciende LUZ.';
-  if (S.phones.length && !S.usb) return 'Hay celulares conectados pero el USB está apagado.';
+  if (G.req) return tag + (d.aceptar_celular ? 'acepta el celular. ' : 'rechaza el pedido. ') + d.texto;
+  if (d.luz === 'APAGAR' && S.lamp) return tag + d.texto + ' Apaga la LUZ.';
+  if (h >= GAME.lampFrom && h < GAME.lampTo && !S.lamp && d.luz === 'HORARIO') return 'El barrio necesita luz de 18:00 a 22:00: enciende LUZ.';
+  if (d.usb === 'BLOQUEADO' && S.usb && S.phones.length) return tag + d.texto + ' Apaga el USB.';
+  if (S.phones.length && !S.usb && d.usb !== 'BLOQUEADO') return 'Hay celulares conectados pero el USB está apagado.';
   if ((h >= GAME.lampTo || h < 6) && S.lamp) return 'Ya nadie usa la lámpara: apágala para ahorrar.';
-  if (evening && avail < need) return 'Agente: con este consumo la batería no llega al amanecer.';
+  if (d.modo === 'AHORRO') return tag + d.texto;
   return '';
 }
 
@@ -1226,8 +1227,8 @@ const INFO = {
     v: () => [['Corriente del panel', fmt(S.Ipv, 2) + ' A'], ['Corriente entregada', fmt(S.Iacc, 2) + ' A'], ['Estado', S.Ipv < 0.01 ? 'noche' : S.soc > 0.92 ? 'absorción' : 'carga']] },
   fusible: { t: 'Portafusible 10 A', d: 'Protege el bus de 12 V contra cortocircuitos entre la batería y la bornera.', v: () => [['Corriente del bus', fmt(S.Pload / S.V, 2) + ' A']] },
   bornera: { t: 'Bornera del bus 12 V / GND', d: 'Distribuye el bus de 12 V a los relés, los LM2596 y el cargador USB.', v: () => [['Potencia distribuida', W(S.Pload)]] },
-  rpi: { t: 'Raspberry Pi Zero 2 W', d: 'Reemplaza a la LicheeRV Nano, que nunca llegó. Corre el agente de IA local y el dashboard por WiFi, y habla con el STM32 por UART. Gasta más que el STM32, así que el STM32 solo la enciende cuando hay excedente solar o batería alta.',
-    v: () => [['Estado', !S.rpi ? 'apagada' : S.rpiBusy ? 'trabajando (agente)' : 'en reposo'], ['Potencia', W(S.pRpi || 0)], ['Excedente solar', W(S.surplus)]] },
+  rpi: { t: 'Raspberry Pi Zero 2 W', d: 'Reemplaza a la LicheeRV Nano, que nunca llegó. Corre el agente (un árbol de decisión, sin internet) y el dashboard por WiFi local, y habla con el STM32 por UART. Gasta más que el STM32, así que el STM32 solo la enciende cuando hay excedente solar o batería alta.',
+    v: () => [['Estado', !S.rpi ? 'apagada' : S.rpiBusy ? 'trabajando (agente)' : 'en reposo'], ['Potencia', W(S.pRpi || 0)], ['Excedente solar', W(S.surplus)], ['Agente', (() => { const d = agentDecision(); return d.modo + ' · hoja ' + d.hoja; })()], ['Balance al amanecer', fmt(agentDecision().balance_wh) + ' Wh']] },
   stm32: { t: 'STM32F103 · Blue Pill', d: 'El tiempo real: lee las 4 LDR por ADC, genera el PWM de los 2 servos, maneja los 3 relés, los interruptores y el LCD, decide el corte por bajo voltaje y enciende o apaga la Raspberry Pi.',
     v: () => [['Seguidor', S.mode], ['Correcciones', String(S.corrections)], ['Raspberry Pi', S.rpi ? 'encendida' : 'apagada']] },
   ina226: { t: 'INA226 (I²C)', d: 'Mide el voltaje y la corriente del bus de 12 V. Con esos datos se estima el estado de carga y se calcula el voltaje en reposo (V − I·R) para reconectar tras un corte.',
@@ -1899,7 +1900,7 @@ camera.position.set(...CAMS[S.cam].p); controls.target.set(...CAMS[S.cam].t); ca
 syncControls();
 $('#loading').hidden = true;
 try { if (!localStorage.getItem('solar3d-intro')) { openModal('help'); localStorage.setItem('solar3d-intro', '1'); } } catch (e) { openModal('help'); }
-window.solar = { S, P, ESC, G, GAME, XR, step, loadScenario, finishScenario, setLid, setCam, gameTick, gameScore, acceptReq, rejectReq, spawnCloud, flyAway, cloudBlocks, agentHint, hud, hudTex, drawHud, xrAction, xrPick }; // para depurar desde la consola
+window.solar = { S, P, ESC, G, GAME, decidir, agentState, agentDecision, XR, step, loadScenario, finishScenario, setLid, setCam, gameTick, gameScore, acceptReq, rejectReq, spawnCloud, flyAway, cloudBlocks, agentHint, hud, hudTex, drawHud, xrAction, xrPick }; // para depurar desde la consola
 last = performance.now();
 renderer.setAnimationLoop(frame);
 </script>

@@ -31,7 +31,7 @@ El juego empieza a las 06:00 con la batería al 35 % y dura 24 h, unos 2,4 min a
 - Los vecinos piden cargar el celular (9 pedidos de 1,5 h cada uno). Se aceptan o se rechazan, con un máximo de 2 a la vez por los 2 USB.
 - De 18:00 a 22:00 el barrio necesita la lámpara.
 - En el día llegan 3 nubes y se quedan tapando el panel hasta que alguien las aparta.
-- El agente (la RPi) avisa si la energía alcanza para la noche antes de aceptar un celular.
+- El agente de la RPi avisa si conviene aceptar cada celular y cuándo ahorrar. Es el mismo **árbol de decisión** del proyecto ([`proyecto/agente/`](../../proyecto/agente/)), portado a [`arbol.js`](arbol.js). El aviso dice la hoja del árbol (H1–H10) y el modo, y la ficha de la Raspberry Pi muestra la decisión y el balance al amanecer en vivo.
 
 | Acción | Puntos |
 |---|---|
@@ -41,7 +41,17 @@ El juego empieza a las 06:00 con la batería al 35 % y dura 24 h, unos 2,4 min a
 | Corte por bajo voltaje | −30 |
 | Amanecer con SoC ≥ 40 % | +20 |
 
-Corrimos partidas automáticas desde la consola con el modelo de arriba. Aceptar todo da ~77 puntos (6 celulares, pero hay un corte a las ~22 h). Rechazar todo da ~69, y seguir al agente da ~99 (5 celulares, sin corte). Si no se apartan las nubes, el corte llega aunque se siga al agente (~60).
+Corrimos partidas automáticas en Chrome headless, con pasos de 5 s y la lámpara de 18 a 22 h:
+
+| Política | Puntos | Celulares | Cortes | SoC al amanecer |
+|---|---|---|---|---|
+| Aceptar todo | 77 | 6 | 1 (~22 h) | 26 % |
+| Rechazar todo | 69 | 0 | 0 | 43 % |
+| **Seguir el árbol** | **109** | 4 | 0 | 41 % |
+| Seguir el árbol, también en la luz y el USB | 107 | 4 | 0 | 46 % |
+| Seguir el árbol sin apartar las nubes | 90 | 3 | 0 | 41 % |
+
+El árbol acepta los 4 pedidos del día, cuando hay sol de sobra (hoja H3), y rechaza todos los de la noche (H8–H10), porque con el SoC mínimo del 50 % no alcanza para otro celular. Antes, la regla de la simulación usaba un piso del 25 % y daba ~99 puntos. Si no se apartan las nubes, rechaza el pedido de las 10:00 (H6), pero tampoco hay corte.
 
 ## Realidad mixta (Meta Quest)
 
