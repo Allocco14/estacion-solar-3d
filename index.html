@@ -122,7 +122,7 @@
         <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M6 13h5l7-6v18l-7-6H6z" class="k"/><path d="M22 12a6 6 0 0 1 0 8M25 9a10 10 0 0 1 0 14" class="a"/></svg>
         <span class="spec">I²S · 3 W</span>
         <h3>Te habla</h3>
-        <p>Un agente con Gemini decide cómo repartir la energía y te avisa por una bocina: si conviene ahorrar, si ya cargó, si algo falla.</p>
+        <p>Un agente que corre dentro de la caja decide cómo repartir la energía y te avisa por una bocina: si conviene ahorrar, si ya cargó, si algo falla.</p>
       </article>
       <article>
         <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="9" y="4" width="14" height="24" rx="3" class="k"/><path d="M12 20l3-4 2.5 2.5L21 13" class="a"/><path d="M14 24h4" class="k"/></svg>
@@ -139,14 +139,14 @@
   <div class="in split">
     <div>
       <p class="kicker">Inteligente, pero no frágil</p>
-      <h2>Si se cae el internet, Solar Saver sigue igual.</h2>
-      <p class="sub">Adentro corren dos programas separados. El de control protege la batería y mueve el panel cada 1 a 2 segundos, y no espera a nadie. El agente consulta a Gemini cada 15 minutos; sin red decide con reglas locales. Y un validador revisa cada decisión antes de que llegue al control.</p>
+      <h2>No necesita internet. Ni para pensar.</h2>
+      <p class="sub">Adentro corren dos programas separados. El de control protege la batería y mueve el panel cada 1 a 2 segundos, y no espera a nadie. El agente es un árbol de decisión que corre en la misma caja: no consulta nada en internet, así que no gasta energía en conexiones y decide igual con red o sin ella. Y lo que propone nunca pasa por encima del corte de la batería ni de los interruptores.</p>
       <a class="enlace" href="proyecto/#arquitectura">Ver la arquitectura completa →</a>
     </div>
     <div class="capas" aria-label="Tres capas de decisión">
       <div class="capa c1"><span>Siempre</span><b>Control y protección</b><em>cada 1–2 s · sin red</em></div>
-      <div class="capa c2"><span>Filtro</span><b>Validador local</b><em>rangos y modos válidos</em></div>
-      <div class="capa c3"><span>Si hay internet</span><b>Agente con Gemini</b><em>cada 15 min · estrategia y voz</em></div>
+      <div class="capa c2"><span>Tú mandas</span><b>Interruptores</b><em>mandan sobre el agente</em></div>
+      <div class="capa c2"><span>Cada 15–30 min</span><b>Agente local</b><em>árbol de decisión · estrategia y voz</em></div>
     </div>
   </div>
 </section>
@@ -203,8 +203,8 @@
         <div><dt>Mando</dt><dd>3 interruptores físicos: luz, USB y voz</dd></div>
       </dl>
       <dl><dt>Inteligencia</dt>
-        <div><dt>Cómputo</dt><dd>Raspberry Pi Zero 2 W, siempre encendida (~1 W con Wi-Fi)</dd></div>
-        <div><dt>Agente</dt><dd>Gemini API, con reglas locales sin internet</dd></div>
+        <div><dt>Cómputo</dt><dd>Raspberry Pi Zero 2 W, siempre encendida (~1 W con Wi-Fi local)</dd></div>
+        <div><dt>Agente</dt><dd>Árbol de decisión en la Pi, sin internet</dd></div>
         <div><dt>Voz</dt><dd>Amplificador I²S y bocina de 3 W</dd></div>
         <div><dt>Pantallas</dt><dd>LCD en la caja · panel web por Wi-Fi local</dd></div>
       </dl>
@@ -232,7 +232,7 @@
     <p class="kicker">Preguntas</p>
     <h2>Lo que nos preguntan.</h2>
     <div class="faq">
-      <details><summary>¿Necesita internet?</summary><p>No. La luz, el USB, la protección de la batería y el seguimiento del sol funcionan sin red. El internet solo sirve para que el agente consulte a Gemini; sin él decide con reglas locales.</p></details>
+      <details><summary>¿Necesita internet?</summary><p>No. La luz, el USB, la protección de la batería y el seguimiento del sol funcionan sin red. El agente también corre en la caja, sin internet. El Wi-Fi solo sirve para ver el panel en el celular, y funciona con el hotspot aunque el celular no tenga datos.</p></details>
       <details><summary>¿Qué pasa si la batería se baja demasiado?</summary><p>Se corta sola, en dos niveles. Primero la Raspberry Pi apaga las cargas con un relé; si eso fallara, el controlador de carga corta por su cuenta. Así la batería AGM no se daña.</p></details>
       <details><summary>¿Alcanza un día de sol para llenarla?</summary><p>Con unas 4 horas de sol pico, el panel entrega 60–80 Wh antes de pérdidas, más que los ≈ 40 Wh útiles de la batería. En días nublados el agente ajusta el consumo para que la luz alcance.</p></details>
       <details><summary>¿La puedo controlar a mano?</summary><p>Siempre. Los interruptores del frente mandan sobre el agente: si quieres la luz encendida, se enciende.</p></details>

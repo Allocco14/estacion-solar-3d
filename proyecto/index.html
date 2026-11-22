@@ -41,7 +41,7 @@
     <div>
       <div class="eyebrow"><b>DSE 2026-2</b> · Diseño de Sistemas Electrónicos · Universidad Nacional de Colombia</div>
       <h1>Sistema portátil inteligente de energía solar para emergencias</h1>
-      <p class="lede">Una estación que se carga con el sol y da luz y carga de celulares cuando se va la energía. Un panel de 20 W con seguimiento en un eje llena una batería de 12 V. Una Raspberry Pi Zero 2 W protege la batería, maneja las salidas y corre un agente con Gemini que reparte la energía para que alcance para la noche, y que avisa hablando cuando pasa algo.</p>
+      <p class="lede">Una estación que se carga con el sol y da luz y carga de celulares cuando se va la energía. Un panel de 20 W con seguimiento en un eje llena una batería de 12 V. Una Raspberry Pi Zero 2 W protege la batería, maneja las salidas y corre un agente local, un árbol de decisión sin internet, que reparte la energía para que alcance para la noche, y que avisa hablando cuando pasa algo.</p>
       <div class="btns">
         <a class="btn primary" href="../simulacion/">Ver la simulación 3D <span class="arr" aria-hidden="true">→</span></a>
         <a class="btn" href="../requerimientos/">Requerimientos</a>
@@ -121,10 +121,10 @@
 </section>
 
 <h2 id="arquitectura"><span class="num">01</span>Arquitectura</h2>
-<p>La <b>Raspberry Pi Zero 2 W</b> es el único cómputo y queda siempre encendida. Corre dos servicios separados. El de <b>control</b> trabaja cada 1–2 s: lee los sensores, sigue el sol, aplica las protecciones y mueve el servo y los relés, sin depender de la red. El del <b>agente</b> consulta a Gemini cada 15 min y cuando pasa algo; un validador local revisa cada respuesta antes de que llegue al control, y sin red decide con reglas locales. La protección de la batería tiene un segundo nivel en el controlador de carga, que no depende de la Pi.</p>
+<p>La <b>Raspberry Pi Zero 2 W</b> es el único cómputo y queda siempre encendida. Corre dos servicios separados. El de <b>control</b> trabaja cada 1–2 s: lee los sensores, sigue el sol, aplica las protecciones y mueve el servo y los relés, sin depender de la red. El del <b>agente</b> decide cada 15–30 min y cuando pasa algo con un <b>árbol de decisión</b> que corre en la misma Pi: no usa internet, así que no gasta energía en conexiones. Lo que propone nunca pasa por encima de las protecciones ni de los interruptores. La protección de la batería tiene un segundo nivel en el controlador de carga, que no depende de la Pi.</p>
 <h3 class="keep">Hardware</h3>
 <div class="dgwrap">
-<svg class="dg" viewBox="0 0 1040 590" role="img" aria-label="Diagrama de hardware: el panel de 12 V y 20 W carga la batería a través del controlador y el fusible; el bus de 12 V alimenta tres relés y dos step-down; la Raspberry Pi Zero 2 W es el único cómputo: lee las LDR y el potenciómetro por un ADS1115, el INA226 por I²C y la temperatura por 1-Wire; mueve el servo, controla los relés, muestra en la LCD y habla por un amplificador I²S y una bocina; sale por WiFi hacia Gemini y el celular.">
+<svg class="dg" viewBox="0 0 1040 590" role="img" aria-label="Diagrama de hardware: el panel de 12 V y 20 W carga la batería a través del controlador y el fusible; el bus de 12 V alimenta tres relés y dos step-down; la Raspberry Pi Zero 2 W es el único cómputo: lee las LDR y el potenciómetro por un ADS1115, el INA226 por I²C y la temperatura por 1-Wire; mueve el servo, controla los relés, muestra en la LCD y habla por un amplificador I²S y una bocina; sirve el dashboard al celular por WiFi local, sin internet.">
   <defs>
     <marker id="h-ah" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="mk" d="M0,0 L10,5 L0,10 z"/></marker>
     <marker id="h-ahp" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto-start-reverse"><path class="mk-p" d="M0,0 L10,5 L0,10 z"/></marker>
@@ -169,7 +169,7 @@
   <text class="t" x="490" y="354">Raspberry Pi Zero 2 W</text>
   <text class="s" x="490" y="374">control · agente · voz · dashboard</text>
   <text class="s" x="490" y="392">único cómputo, siempre encendida</text>
-  <text class="s" x="490" y="410">~1 W promedio con WiFi</text>
+  <text class="s" x="490" y="410">~1 W promedio con WiFi local</text>
   <rect class="box" x="40" y="320" width="140" height="40" rx="3"/><text class="s f" x="110" y="337">2 LDR este / oeste</text><text class="s" x="110" y="352">+ potenciómetro del eje</text>
   <rect class="box new" x="210" y="320" width="120" height="40" rx="3"/><text class="t" x="270" y="337">ADS1115</text><text class="s" x="270" y="352">ADC de 4 canales</text>
   <line class="sig" x1="180" y1="340" x2="208" y2="340" marker-end="url(#h-ah)"/>
@@ -189,35 +189,30 @@
   <text class="lb" x="598" y="474">I²S</text>
   <rect class="box new" x="710" y="500" width="85" height="45" rx="4"/><text class="t" x="752" y="519">Bocina</text><text class="s" x="752" y="535">3 W · 4 Ω</text>
   <line class="sig" x1="680" y1="522" x2="708" y2="522" marker-end="url(#h-ah)"/>
-  <rect class="box cloud" x="840" y="250" width="180" height="50" rx="4"/><text class="t" x="930" y="271">Gemini API</text><text class="s" x="930" y="288">decide · texto para voz</text>
-  <rect class="box" x="840" y="380" width="180" height="50" rx="4"/><text class="t" x="930" y="401">Router o hotspot</text><text class="s" x="930" y="418">del celular</text>
+  <rect class="box" x="840" y="380" width="180" height="50" rx="4"/><text class="t" x="930" y="401">Hotspot o router</text><text class="s" x="930" y="418">red local, sin internet</text>
   <rect class="box" x="840" y="480" width="180" height="50" rx="4"/><text class="t" x="930" y="501">Celular del usuario</text><text class="s" x="930" y="518">dashboard web</text>
   <line class="wl" x1="610" y1="405" x2="838" y2="405" marker-end="url(#h-ahc)" marker-start="url(#h-ahc)"/>
   <text class="lb c" x="720" y="398" text-anchor="middle">WiFi</text>
-  <line class="wl" x1="930" y1="380" x2="930" y2="302" marker-end="url(#h-ahc)" marker-start="url(#h-ahc)"/>
-  <text class="lb c" x="940" y="345">HTTPS · internet</text>
   <line class="wl" x1="930" y1="430" x2="930" y2="478" marker-end="url(#h-ahc)" marker-start="url(#h-ahc)"/>
   <text class="lb c" x="940" y="459">WiFi local</text>
 </svg>
 </div>
-<div class="dglegend" aria-hidden="true"><span><i></i>potencia</span><span><i class="sig"></i>señal o bus</span><span><i class="wl"></i>inalámbrico, depende de la red</span><span>borde ámbar = bloque nuevo frente al BOM</span></div>
-<p class="small muted">La energía baja de arriba hacia abajo. La Pi es el único cómputo: todo sensor y todo actuador pasa por ella, y Gemini queda fuera de la caja. Para simplificar, el relé 3 está dibujado como una carga más; en el esquemático va en serie entre el bus y las cargas, que salen por la salida de carga del controlador (primer nivel de corte, REQ 006).</p>
+<div class="dglegend" aria-hidden="true"><span><i></i>potencia</span><span><i class="sig"></i>señal o bus</span><span><i class="wl"></i>inalámbrico (WiFi local)</span><span>borde ámbar = bloque nuevo frente al BOM</span></div>
+<p class="small muted">La energía baja de arriba hacia abajo. La Pi es el único cómputo: todo sensor y todo actuador pasa por ella, y nada sale a internet. Para simplificar, el relé 3 está dibujado como una carga más; en el esquemático va en serie entre el bus y las cargas, que salen por la salida de carga del controlador (primer nivel de corte, REQ 006).</p>
 
 <h3 class="keep">Flujo de información</h3>
 <div class="dgwrap">
-<svg class="dg" viewBox="0 0 1040 560" role="img" aria-label="Diagrama de flujo de información en cuatro franjas, todo en la Raspberry Pi salvo Gemini: un servicio de control cierra el lazo de sensores, seguimiento, protecciones y actuadores cada 1 a 2 segundos; el agente arma un resumen con el estado, consulta a Gemini o usa reglas sin red, y un validador local entrega el modo y las consignas al control; los avisos salen por la bocina y el dashboard.">
+<svg class="dg" viewBox="0 0 1040 430" role="img" aria-label="Diagrama de flujo de información en tres franjas, todo en la Raspberry Pi y sin internet: un servicio de control cierra el lazo de sensores, seguimiento, protecciones y actuadores cada 1 a 2 segundos; el agente arma un resumen con el estado y lo pasa por un árbol de decisión, que entrega el modo y las consignas al control; los avisos salen por la bocina y el dashboard.">
   <defs>
     <marker id="f-ah" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="mk" d="M0,0 L10,5 L0,10 z"/></marker>
     <marker id="f-ahc" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path class="mk-c" d="M0,0 L10,5 L0,10 z"/></marker>
   </defs>
   <rect class="z1" x="10" y="28" width="1020" height="112" rx="6"/>
   <rect class="z2" x="10" y="158" width="1020" height="132" rx="6"/>
-  <rect class="z3" x="10" y="308" width="1020" height="114" rx="6"/>
-  <rect class="z4" x="10" y="440" width="1020" height="110" rx="6"/>
+  <rect class="z4" x="10" y="308" width="1020" height="112" rx="6"/>
   <text class="zl" x="24" y="46">RASPBERRY PI · SERVICIO DE CONTROL · CADA 1–2 s · SIEMPRE ACTIVO</text>
-  <text class="zl" x="24" y="176">RASPBERRY PI · AGENTE</text>
-  <text class="zl" x="24" y="326">NUBE · CADA 5–15 min · SOLO CON INTERNET</text>
-  <text class="zl" x="24" y="458">USUARIO</text>
+  <text class="zl" x="24" y="176">RASPBERRY PI · AGENTE · SIN INTERNET</text>
+  <text class="zl" x="24" y="326">USUARIO</text>
   <rect class="box" x="30" y="62" width="150" height="50" rx="4"/><text class="t" x="105" y="83">Sensores</text><text class="s" x="105" y="100">ADS1115, INA226, temp.</text>
   <rect class="box" x="240" y="62" width="150" height="50" rx="4"/><text class="t" x="315" y="83">Adquisición</text><text class="s" x="315" y="100">filtro y validación</text>
   <rect class="box" x="450" y="62" width="150" height="50" rx="4"/><text class="t" x="525" y="83">Seguimiento del sol</text><text class="s" x="525" y="100">E/O + histéresis</text>
@@ -233,30 +228,23 @@
   <text class="lb" x="325" y="150">estado cada 1 s</text>
   <rect class="box" x="240" y="205" width="150" height="55" rx="4"/><text class="t" x="315" y="228">Estado del sistema</text><text class="s" x="315" y="245">lecturas + historial</text>
   <rect class="box hub" x="450" y="205" width="150" height="55" rx="4"/><text class="t" x="525" y="228">Agente</text><text class="s" x="525" y="245">arma el resumen</text>
-  <rect class="box hub" x="660" y="205" width="150" height="55" rx="4"/><text class="t" x="735" y="228">Validador local</text><text class="s" x="735" y="245">rangos y modos válidos</text>
+  <rect class="box hub" x="660" y="205" width="150" height="55" rx="4"/><text class="t" x="735" y="228">Árbol de decisión</text><text class="s" x="735" y="245">9 preguntas · 10 hojas</text>
   <rect class="box" x="870" y="205" width="150" height="55" rx="4"/><text class="t" x="945" y="228">Avisos y registro</text><text class="s" x="945" y="245">mensaje · log · motivo</text>
   <line class="sig" x1="390" y1="232" x2="448" y2="232" marker-end="url(#f-ah)"/>
-  <line class="sig" x1="600" y1="240" x2="658" y2="240" marker-end="url(#f-ah)"/>
-  <text class="lb" x="629" y="232" text-anchor="middle">sin red:</text>
-  <text class="lb" x="629" y="256" text-anchor="middle">reglas</text>
+  <line class="sig" x1="600" y1="232" x2="658" y2="232" marker-end="url(#f-ah)"/>
   <line class="sig" x1="810" y1="232" x2="868" y2="232" marker-end="url(#f-ah)"/>
   <line class="sig" x1="735" y1="205" x2="735" y2="114" marker-end="url(#f-ah)"/>
   <text class="lb" x="745" y="150">modo y consignas</text>
-  <line class="wl" x1="505" y1="260" x2="505" y2="343" marker-end="url(#f-ahc)"/>
-  <text class="lb c" x="497" y="305" text-anchor="end">HTTPS · resumen</text>
-  <rect class="box cloud" x="450" y="345" width="150" height="55" rx="4"/><text class="t" x="525" y="368">Gemini API</text><text class="s" x="525" y="385">JSON + texto a decir</text>
-  <polyline class="wl" points="600,372 735,372 735,262" marker-end="url(#f-ahc)"/>
-  <text class="lb c" x="612" y="364">decisión en JSON</text>
-  <polyline class="sig" points="900,260 900,470 735,470 735,483" marker-end="url(#f-ah)"/>
-  <text class="lb" x="890" y="465" text-anchor="end">voz (TTS)</text>
-  <rect class="box" x="660" y="485" width="150" height="50" rx="4"/><text class="t" x="735" y="506">Bocina</text><text class="s" x="735" y="522">el agente habla</text>
-  <line class="sig" x1="970" y1="260" x2="970" y2="483" marker-end="url(#f-ah)"/>
-  <text class="lb" x="978" y="400">WiFi</text>
-  <rect class="box" x="880" y="485" width="140" height="50" rx="4"/><text class="t" x="950" y="506">Celular y LCD</text><text class="s" x="950" y="522">dashboard · alertas</text>
+  <polyline class="sig" points="900,260 900,338 735,338 735,351" marker-end="url(#f-ah)"/>
+  <text class="lb" x="890" y="333" text-anchor="end">voz (TTS local)</text>
+  <rect class="box" x="660" y="353" width="150" height="50" rx="4"/><text class="t" x="735" y="374">Bocina</text><text class="s" x="735" y="390">el agente habla</text>
+  <line class="sig" x1="970" y1="260" x2="970" y2="351" marker-end="url(#f-ah)"/>
+  <text class="lb" x="978" y="310">WiFi local</text>
+  <rect class="box" x="880" y="353" width="140" height="50" rx="4"/><text class="t" x="950" y="374">Celular y LCD</text><text class="s" x="950" y="390">dashboard · alertas</text>
 </svg>
 </div>
-<div class="dglegend" aria-hidden="true"><span><i class="sig"></i>siempre disponible</span><span><i class="wl"></i>solo con internet</span></div>
-<p class="small muted">Todo corre en la Pi como dos programas separados. El servicio de control mueve el panel y protege la batería, y no espera a nadie. El agente decide la estrategia, y lo que devuelve Gemini pasa por el validador antes de llegar al control.</p>
+<div class="dglegend" aria-hidden="true"><span><i class="sig"></i>todo corre en la Pi, sin internet</span></div>
+<p class="small muted">Todo corre en la Pi como dos programas separados. El servicio de control mueve el panel y protege la batería, y no espera a nadie. El agente decide la estrategia con un árbol de decisión local; el control la ejecuta solo si no choca con las protecciones ni con los interruptores.</p>
 
 <h2 id="simulacion"><span class="num">02</span>Simulación 3D</h2>
 <div class="sim ticks">
@@ -286,7 +274,8 @@
   <li><span class="n">Entrega 04 · sep</span><div class="h"><b>Estándares y seguridad del hardware.</b> Normas para producir y vender, protección de la PCB, comercialización y alternativas.</div></li>
   <li><span class="n">Entrega 05 · oct</span><div class="h"><b>Placa LED + pulsador</b> para la Raspberry Pi Zero 2 W y <a href="../simulacion/">simulación 3D</a> con modo de realidad mixta.</div></li>
   <li><span class="n">4 nov</span><div class="h"><b>Nueva arquitectura.</b> La Pi queda como único cómputo (sale el STM32), el seguidor pasa a un eje y el agente usa Gemini y habla por una bocina.</div></li>
-  <li class="now"><span class="n">Clase 19 · 5 nov</span><div class="h"><b><a href="../requerimientos/">Requerimientos e historias de usuario</a></b>, con el tablero Kanban del desarrollo.</div></li>
+  <li><span class="n">Clase 19 · 5 nov</span><div class="h"><b><a href="../requerimientos/">Requerimientos e historias de usuario</a></b>, con el tablero Kanban del desarrollo.</div></li>
+  <li class="now"><span class="n">22 nov</span><div class="h"><b>Agente solo local.</b> Sale Gemini para ahorrar energía: el agente pasa a ser un árbol de decisión que corre en la Pi, sin internet.</div></li>
 </ol>
 
 <h2 id="equipo"><span class="num">04</span>Equipo</h2>
